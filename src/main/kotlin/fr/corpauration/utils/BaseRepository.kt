@@ -13,15 +13,17 @@ class BaseRepository<K, V: BaseEntity>(var table: String) {
     @Inject
     var client: PgPool? = null
 
+    fun battle(r: Any): V {
+        print(r)
+        return object {} as V
+    }
     fun findAll(): List<V> {
         val rowSet: Uni<RowSet<Row>> = client!!.preparedQuery("SELECT * FROM $1").execute(Tuple.of(table))
-       /* val whatsTheType = rowSet.onItem().transformToMulti(java.util.function.Function<RowSet<Row>, Publisher<*>> {
+        val whatsTheType = rowSet.onItem().transformToMulti(java.util.function.Function<RowSet<Row>, Publisher<*>> {
             set: RowSet<Row> -> Multi.createFrom().iterable(set)
         }).onItem().transform(java.util.function.Function<Any, V> {
-                row: Any -> V = {
-            object {} as V
-        }
-        })*/
+                row: Any -> battle(row)
+        })
 
         return TODO()
     }
