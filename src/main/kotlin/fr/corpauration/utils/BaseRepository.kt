@@ -43,22 +43,22 @@ class BaseRepository<K, BaseEntity>(var client: PgPool, var table: String) {
 
 
 
-    fun oskour(): Multi<BaseEntity> {
+    fun oskour(): Multi<BaseEntity>? {
         val rowSet: Uni<RowSet<Row>> = client.query("SELECT * FROM test").execute()
         return rowSet.onItem().transformToMulti(java.util.function.Function<RowSet<Row>, Publisher<*>> {
                 set: RowSet<Row> -> Multi.createFrom().iterable(set)
-        }).onItem().transform(java.util.function.Function<Any, V> {
-                row: Any -> print("michel"); fr.corpauration.utils.BaseEntity.StaticFunctions.from(row)
+        }).onItem().transform(java.util.function.Function<Any, BaseEntity> {
+                row: Any -> print("michel"); fr.corpauration.utils.BaseEntity.StaticFunctions.from(row as Row) as BaseEntity
         })
     }
 
-    fun findById(id: K): V {
+    fun findById(id: K): BaseEntity {
         return TODO()
     }
 
-    fun findBy(id: Any, field: String): V {
+    fun findBy(id: Any, field: String): BaseEntity {
         return TODO()
     }
 
-    fun save(obj: V): Nothing = TODO()
+    fun save(obj: BaseEntity): Nothing = TODO()
 }

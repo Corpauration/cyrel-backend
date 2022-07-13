@@ -20,7 +20,7 @@ class GroupResource : BaseResource() {
     @Inject
     lateinit var client: PgPool
     @GET
-    fun hello(): Multi<BaseEntity> {
+    fun hello(): Multi<BaseEntity>? {
         val repo: BaseRepository<Int, BaseEntity> = BaseRepository(client, "test")
         return repo.oskour()
     }
