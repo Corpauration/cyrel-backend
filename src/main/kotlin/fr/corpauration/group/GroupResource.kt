@@ -31,8 +31,17 @@ class GroupsResource : BaseResource() {
     lateinit var client: PgPool
 
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     fun get(): Multi<BaseEntity>? {
         val repo: BaseRepository<Int, BaseEntity> = BaseRepository(client, "test")
         return repo.getAll()
+    }
+
+    @GET
+    @Path("/ids")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getids(): Multi<Int>? {
+        val repo: BaseRepository<Int, BaseEntity> = BaseRepository(client, "test")
+        return repo.getIds()
     }
 }
