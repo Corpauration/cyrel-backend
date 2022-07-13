@@ -4,11 +4,13 @@ import fr.corpauration.utils.BaseEntity
 import fr.corpauration.utils.BaseRepository
 import fr.corpauration.utils.BaseResource
 import io.smallrye.mutiny.Multi
+import io.smallrye.mutiny.Uni
 import io.vertx.mutiny.pgclient.PgPool
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.GET
 import javax.ws.rs.Path
+import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 
@@ -22,6 +24,14 @@ class GroupResource : BaseResource() {
 
     @GET
     fun hello() = "Hello from Cyrel Api"
+
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getById(@PathParam("id") id: String): Uni<GroupsResource> {
+        val repo: BaseRepository<Int, BaseEntity> = BaseRepository(client, "test")
+        return repo.findById(id.toInt()) as Uni<GroupsResource>
+    }
 }
 
 @Path("/groups")
