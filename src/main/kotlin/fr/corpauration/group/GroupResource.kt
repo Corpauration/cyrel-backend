@@ -19,18 +19,20 @@ class GroupResource : BaseResource() {
 
     @Inject
     lateinit var client: PgPool
+
     @GET
-    fun hello(): Multi<BaseEntity>? {
-        val repo: BaseRepository<Int, BaseEntity> = BaseRepository(client, "test")
-        return repo.oskour()
-    }
+    fun hello() = "Hello from Cyrel Api"
 }
 
 @Path("/groups")
 class GroupsResource : BaseResource() {
+
+    @Inject
+    lateinit var client: PgPool
+
     @GET
-    fun hello() = "Hello from /groups"
+    fun get(): Multi<BaseEntity>? {
+        val repo: BaseRepository<Int, BaseEntity> = BaseRepository(client, "test")
+        return repo.getAll()
+    }
 }
-
-
-//  CustomRepository -> BaseRepository -> Quarkus
