@@ -11,20 +11,23 @@ import org.reactivestreams.Publisher
 import java.util.function.Function
 import javax.transaction.Transactional
 
+//@RepositoryGenerator(table = "test", id = String::class, entity = BaseResource::class)
 class BaseRepository<K, V : BaseEntity>(var client: PgPool, var table: String) {
     @Transactional
     fun getAll(): Multi<V>? {
         val rowSet: Uni<RowSet<Row>> = client.query("SELECT * FROM test").execute()
-        return rowSet.onItem().transformToMulti(java.util.function.Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
+        return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
             Multi.createFrom().iterable(set)
-        }).onItem().transform(java.util.function.Function<Any, V> { row: Any ->
+        }).onItem().transform(Function<Any, V> { row: Any ->
             BaseEntity.StaticFunctions.from(row as Row) as V
         })
     }
 
     @Transactional
     fun getIds(): Multi<Int> {
-        val rowSet: Uni<RowSet<Row>> = client.query("SELECT id FROM test").execute()
+        print(table)
+
+        val rowSet: Uni<RowSet<Row>> = client.query(String.format("SELECT id FROM %s", table)).execute()
         return rowSet.onItem().transformToMulti(java.util.function.Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
             Multi.createFrom().iterable(set)
         }).onItem().transform(java.util.function.Function<Any, Int> { row: Any ->
