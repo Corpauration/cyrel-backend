@@ -1,0 +1,224 @@
+package fr.corpauration.utils
+
+import com.google.devtools.ksp.processing.*
+import com.google.devtools.ksp.symbol.*
+import com.google.devtools.ksp.validate
+import java.io.OutputStream
+
+
+fun OutputStream.appendText(str: String) {
+    this.write(str.toByteArray())
+}
+
+class RepositoryGeneratorProcessor(
+    val codeGenerator: CodeGenerator,
+    val logger: KSPLogger
+) : SymbolProcessor {
+
+
+    override fun process(resolver: Resolver): List<KSAnnotated> {
+        val symbols = resolver.getSymbolsWithAnnotation("fr.corpauration.utils.RepositoryGenerator")
+        logger.warn("RepositoryGeneratorProcessor is running")
+        symbols.forEach {
+            action: KSAnnotated -> logger.warn("annotation found with ${action::class}", action.parent)
+        }
+        val ret = symbols.filter { !it.validate() }.toList()
+        symbols
+            .filter { it is KSPropertyDeclaration && it.validate() }
+            .forEach { it.accept(RepositoryGeneratorVisitor(), it.annotations.find {
+                predicate: KSAnnotation -> predicate.shortName.asString() == "RepositoryGenerator"
+            }) }
+        return ret
+    }
+
+    inner class RepositoryGeneratorVisitor : KSVisitor<KSAnnotation?, Unit> {
+        override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: KSAnnotation?) {
+            logger.error("RepositoryGenerator should only be used on properties!", classDeclaration)
+        }
+
+        override fun visitPropertyDeclaration(property: KSPropertyDeclaration, data: KSAnnotation?) {
+            val parent = property.parentDeclaration as KSClassDeclaration
+            val packageName = parent.containingFile!!.packageName.asString()
+            val className = property.simpleName.asString().capitalize()
+            val table = data?.arguments!!.find { predicate: KSValueArgument -> predicate.name!!.asString() == "table" }?.value
+            val id = data.arguments.find { predicate: KSValueArgument -> predicate.name!!.asString() == "id" }?.value
+            val entity = data.arguments.find { predicate: KSValueArgument -> predicate.name!!.asString() == "entity" }?.value
+            val file = codeGenerator.createNewFile(Dependencies(true, property.containingFile!!), packageName , className)
+            file.appendText(ClassBuilder(packageName, className)
+                .addImport("javax.enterprise.context.ApplicationScoped")
+                .addImport("javax.inject.Inject")
+                .addImport("io.vertx.mutiny.pgclient.PgPool")
+                .set("table", table)
+                .set("id", id)
+                .set("entity", entity)
+                .addClassAnotation("@ApplicationScoped")
+                .addConstructorProprieties("client", "PgPool")
+                /*.addField("""
+                    @Inject
+                    lateinit var client: PgPool
+                """.trimIndent())*/
+                .add { input: ClassBuilder -> generateGetAll(input) }
+                .build())
+
+            file.close()
+        }
+
+        override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: KSAnnotation?) {
+            val parent = function.parentDeclaration as KSClassDeclaration
+            val packageName = parent.containingFile!!.packageName.asString()
+            val className = parent.simpleName.asString()
+            val file = codeGenerator.createNewFile(Dependencies(true, function.containingFile!!), packageName , className)
+            file.appendText(ClassBuilder(packageName, className)
+                .addImport("io.vertx.mutiny.pgclient.PgPool")
+                .add { input: ClassBuilder -> generateGetAll(input) }
+                .build())
+            /*file.appendText("package $packageName\n\n")
+//            file.appendText("import HELLO\n\n")
+            file.appendText("class $className{\n")
+            function.parameters.forEach {
+                val name = it.name!!.asString()
+                val typeName = StringBuilder(it.type.resolve().declaration.qualifiedName?.asString() ?: "<ERROR>")
+                val typeArgs = it.type.element!!.typeArguments
+                if (it.type.element!!.typeArguments.isNotEmpty()) {
+                    typeName.append("<")
+                    typeName.append(
+                        typeArgs.map {
+                            val type = it.type?.resolve()
+                            "${it.variance.label} ${type?.declaration?.qualifiedName?.asString() ?: "ERROR"}" +
+                                    if (type?.nullability == Nullability.NULLABLE) "?" else ""
+                        }.joinToString(", ")
+                    )
+                    typeName.append(">")
+                }
+                file.appendText("    private var $name: $typeName? = null\n")
+                file.appendText("    internal fun with${name.capitalize()}($name: $typeName): $className {\n")
+                file.appendText("        this.$name = $name\n")
+                file.appendText("        return this\n")
+                file.appendText("    }\n\n")
+            }
+            file.appendText("    internal fun build(): ${parent.qualifiedName!!.asString()} {\n")
+            file.appendText("        return ${parent.qualifiedName!!.asString()}(")
+            file.appendText(
+                function.parameters.map {
+                    "${it.name!!.asString()}!!"
+                }.joinToString(", ")
+            )
+            file.appendText(")\n")
+            file.appendText("    }\n")
+            file.appendText("}\n")*/
+            file.close()
+        }
+
+        fun generateGetAll(builder: ClassBuilder): ClassBuilder {
+            return builder
+                .addImport("io.smallrye.mutiny.Multi")
+                .addImport("io.smallrye.mutiny.Uni")
+                .addImport("io.vertx.mutiny.sqlclient.RowSet")
+                .addImport("io.vertx.mutiny.sqlclient.Row")
+                .addImport("java.util.function.Function")
+                .addImport("org.reactivestreams.Publisher")
+                .addFunction("""
+                fun getAll(): Multi<${builder.get("entity")}> {
+                    val rowSet: Uni<RowSet<Row>> = client.query("SELECT * FROM ${builder.get("table")}").execute()
+                    return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
+                        Multi.createFrom().iterable(set)
+                    }).onItem().transform(Function<Any, ${builder.get("entity")}> { row: Any ->
+                        BaseEntity.StaticFunctions.from(row as Row) as ${builder.get("entity")}
+                    })
+                }
+                """.trimIndent())
+        }
+
+        override fun visitAnnotated(annotated: KSAnnotated, data: KSAnnotation?) {
+
+        }
+
+        override fun visitAnnotation(annotation: KSAnnotation, data: KSAnnotation?) {
+
+        }
+
+        override fun visitCallableReference(reference: KSCallableReference, data: KSAnnotation?) {
+
+        }
+
+        override fun visitClassifierReference(reference: KSClassifierReference, data: KSAnnotation?) {
+
+        }
+
+        override fun visitDeclaration(declaration: KSDeclaration, data: KSAnnotation?) {
+
+        }
+
+        override fun visitDeclarationContainer(declarationContainer: KSDeclarationContainer, data: KSAnnotation?) {
+
+        }
+
+        override fun visitDynamicReference(reference: KSDynamicReference, data: KSAnnotation?) {
+
+        }
+
+        override fun visitFile(file: KSFile, data: KSAnnotation?) {
+
+        }
+
+        override fun visitModifierListOwner(modifierListOwner: KSModifierListOwner, data: KSAnnotation?) {
+
+        }
+
+        override fun visitNode(node: KSNode, data: KSAnnotation?) {
+
+        }
+
+        override fun visitParenthesizedReference(reference: KSParenthesizedReference, data: KSAnnotation?) {
+
+        }
+
+        override fun visitPropertyAccessor(accessor: KSPropertyAccessor, data: KSAnnotation?) {
+
+        }
+
+        override fun visitPropertyGetter(getter: KSPropertyGetter, data: KSAnnotation?) {
+
+        }
+
+        override fun visitPropertySetter(setter: KSPropertySetter, data: KSAnnotation?) {
+
+        }
+
+        override fun visitReferenceElement(element: KSReferenceElement, data: KSAnnotation?) {
+
+        }
+
+        override fun visitTypeAlias(typeAlias: KSTypeAlias, data: KSAnnotation?) {
+
+        }
+
+        override fun visitTypeArgument(typeArgument: KSTypeArgument, data: KSAnnotation?) {
+
+        }
+
+        override fun visitTypeParameter(typeParameter: KSTypeParameter, data: KSAnnotation?) {
+
+        }
+
+        override fun visitTypeReference(typeReference: KSTypeReference, data: KSAnnotation?) {
+
+        }
+
+        override fun visitValueArgument(valueArgument: KSValueArgument, data: KSAnnotation?) {
+
+        }
+
+        override fun visitValueParameter(valueParameter: KSValueParameter, data: KSAnnotation?) {
+
+        }
+    }
+}
+
+class RepositoryGeneratorProcessorProvider : SymbolProcessorProvider {
+    override fun create(
+        environment: SymbolProcessorEnvironment
+    ): SymbolProcessor {
+        return RepositoryGeneratorProcessor(environment.codeGenerator, environment.logger)
+    }
+}

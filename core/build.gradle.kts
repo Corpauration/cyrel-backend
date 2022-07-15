@@ -1,8 +1,8 @@
 plugins {
     kotlin("jvm") version "1.6.21"
     kotlin("plugin.allopen") version "1.6.21"
+    kotlin("kapt") version "1.6.21"
     id("io.quarkus")
-    id("com.google.devtools.ksp") version "1.6.21-1.0.6"
 }
 
 repositories {
@@ -15,9 +15,7 @@ val quarkusPlatformArtifactId: String by project
 val quarkusPlatformVersion: String by project
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    implementation(project(":processor"))
-    ksp(project(":processor"))
+//    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
     implementation("io.quarkus:quarkus-kotlin")
@@ -27,14 +25,13 @@ dependencies {
     implementation("io.quarkus:quarkus-resteasy-reactive")
     implementation("io.quarkus:quarkus-flyway")
     implementation("com.squareup:kotlinpoet:1.12.0")
+    implementation("com.google.auto.service:auto-service:1.0.1")
+    kapt("com.google.auto.service:auto-service:1.0.1")
+    implementation(":processor")
+    kapt(":processor")
+//    kapt(project(":"))
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
-}
-
-buildscript {
-    dependencies {
-        classpath(kotlin("gradle-plugin", version = "1.6.21"))
-    }
 }
 
 group = "fr.corpauration"
@@ -51,16 +48,11 @@ allOpen {
     annotation("io.quarkus.test.junit.QuarkusTest")
 }
 
+kapt {
+    useBuildCache = false
+}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
     kotlinOptions.javaParameters = true
-}
-
-kotlin {
-    sourceSets.main {
-        kotlin.srcDir("build/generated/ksp/main/kotlin")
-    }
-    sourceSets.test {
-        kotlin.srcDir("build/generated/ksp/test/kotlin")
-    }
 }
