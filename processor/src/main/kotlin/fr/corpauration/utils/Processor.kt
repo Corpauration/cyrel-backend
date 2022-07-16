@@ -59,6 +59,7 @@ class RepositoryGeneratorProcessor(
                 """.trimIndent())*/
                 .add { input: ClassBuilder -> generateGetAll(input) }
                 .add { input: ClassBuilder -> generateGetIds(input) }
+                .add { input: ClassBuilder -> generateFindById(input) }
                 .build())
 
             file.close()
@@ -148,6 +149,23 @@ class RepositoryGeneratorProcessor(
                     })
                 }
                 """.trimIndent())
+        }
+
+        fun generateFindById(builder: ClassBuilder): ClassBuilder {
+            return builder.addImport("io.smallrye.mutiny.Multi")
+                    .addImport("io.smallrye.mutiny.Uni")
+                    .addImport("io.vertx.mutiny.sqlclient.RowSet")
+                    .addImport("io.vertx.mutiny.sqlclient.RowIterator")
+                    .addImport("io.vertx.mutiny.sqlclient.Row")
+                    .addImport("io.vertx.mutiny.sqlclient.Tuple")
+                    .addImport("java.util.function.Function")
+                    .addImport("org.reactivestreams.Publisher")
+                    .addFunction("""
+                    fun findById(id: ${builder.get("id")}): Uni<${builder.get("entity")}> {
+                        return client.preparedQuery("SELECT * FROM ${builder.get("table")} WHERE id = ${'$'}1").execute(Tuple.of(id)).onItem().transform(RowSet<Row>::iterator).onItem()
+                        .transform<Any?>(Function<RowIterator<Row?>, Any?> { iterator: RowIterator<Row?> -> if (iterator.hasNext()) BaseEntity.StaticFunctions.from(iterator.next() as Row) else null }) as Uni<${builder.get("entity")}>    
+                    }    
+                    """.trimIndent())
         }
 
         override fun visitAnnotated(annotated: KSAnnotated, data: KSAnnotation?) {

@@ -1,11 +1,14 @@
 package fr.corpauration.utils
 
+import fr.corpauration.group.GroupsResource
 import io.smallrye.mutiny.Multi
+import io.smallrye.mutiny.Uni
 import io.vertx.mutiny.pgclient.PgPool
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.GET
 import javax.ws.rs.Path
+import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 
@@ -32,5 +35,12 @@ class TestRessource {
     @ApplicationScoped
     fun ids(): Multi<Int>? {
         return (testRepository as TestRepository).getIds()
+    }
+
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getById(@PathParam("id") id: String): Uni<BaseEntity> {
+        return (testRepository as TestRepository).findById(id.toInt())
     }
 }
