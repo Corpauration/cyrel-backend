@@ -15,6 +15,8 @@ class ClassBuilder(val packageName: String, val className: String) {
 
     private val variables: HashMap<String, Any?> = HashMap()
 
+    private val extensions: ArrayList<String> = ArrayList()
+
     fun addImport(classPath: String): ClassBuilder {
         imports.add("import $classPath")
         return this
@@ -37,6 +39,11 @@ class ClassBuilder(val packageName: String, val className: String) {
 
     fun addFunction(function: String): ClassBuilder {
         functions.add(function)
+        return this
+    }
+
+    fun addExtension(extension: String): ClassBuilder {
+        extensions.add(extension)
         return this
     }
 
@@ -80,5 +87,7 @@ class ClassBuilder(val packageName: String, val className: String) {
 
         ${functions.joinToString("\n\n        ")}
     }
+    
+    ${extensions.joinToString("\n\n")}
     """.trimIndent()
 }
