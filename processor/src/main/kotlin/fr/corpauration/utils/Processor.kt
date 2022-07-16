@@ -58,6 +58,7 @@ class RepositoryGeneratorProcessor(
                     lateinit var client: PgPool
                 """.trimIndent())*/
                 .add { input: ClassBuilder -> generateGetAll(input) }
+                .add { input: ClassBuilder -> generateGetIds(input) }
                 .build())
 
             file.close()
@@ -124,6 +125,26 @@ class RepositoryGeneratorProcessor(
                         Multi.createFrom().iterable(set)
                     }).onItem().transform(Function<Any, ${builder.get("entity")}> { row: Any ->
                         BaseEntity.StaticFunctions.from(row as Row) as ${builder.get("entity")}
+                    })
+                }
+                """.trimIndent())
+        }
+
+        fun generateGetIds(builder: ClassBuilder): ClassBuilder {
+            return builder
+                .addImport("io.smallrye.mutiny.Multi")
+                .addImport("io.smallrye.mutiny.Uni")
+                .addImport("io.vertx.mutiny.sqlclient.RowSet")
+                .addImport("io.vertx.mutiny.sqlclient.Row")
+                .addImport("java.util.function.Function")
+                .addImport("org.reactivestreams.Publisher")
+                .addFunction("""
+                fun getIds(): Multi<${builder.get("id")}> {
+                    val rowSet: Uni<RowSet<Row>> = client.query("SELECT id FROM ${builder.get("table")}").execute()
+                    return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
+                        Multi.createFrom().iterable(set)
+                    }).onItem().transform(Function<Any, ${builder.get("id")}> { row: Any ->
+                        (row as Row).getValue("id") as ${builder.get("id")}
                     })
                 }
                 """.trimIndent())
