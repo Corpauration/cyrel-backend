@@ -4,6 +4,8 @@ import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.validate
 import java.io.OutputStream
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 fun OutputStream.appendText(str: String) {
@@ -62,6 +64,7 @@ class RepositoryGeneratorProcessor(
                 .add { input: ClassBuilder -> generateGetIds(input) }
                 .add { input: ClassBuilder -> generateFindById(input) }
                 .add { input: ClassBuilder -> generateFindBy(input) }
+                .add { input: ClassBuilder -> generateSave(input) }
                 .build())
 
             file.close()
@@ -144,6 +147,46 @@ class RepositoryGeneratorProcessor(
                         }).onItem().transform(Function<Any, ${builder.get("entity")}> { row: Any ->
                             ${builder.get("entity")}.from(row as Row)
                         })
+                    }    
+                    """.trimIndent())
+        }
+
+        fun generateSave(builder: ClassBuilder): ClassBuilder {
+            codeGenerator.generatedFile.forEach{ logger.warn(it.nameWithoutExtension) }
+            val line = codeGenerator.generatedFile
+                .filter { it.nameWithoutExtension == "${builder.get("entity")}Generated" }
+                .first()
+                .bufferedReader()
+                .useLines {
+                        lines: Sequence<String> ->
+                    lines
+                        .take(1)
+                        .toList()
+                        .first()
+                }
+            val l = Regex("\\[(.*)\\]").find(line)?.groupValues!![1].split(",").toTypedArray()
+            return builder
+                .addImport("io.smallrye.mutiny.Multi")
+                .addImport("io.smallrye.mutiny.Uni")
+                .addImport("io.vertx.mutiny.sqlclient.RowSet")
+                .addImport("io.vertx.mutiny.sqlclient.Row")
+                .addImport("java.util.function.Function")
+                .addImport("org.reactivestreams.Publisher")
+                .addFunction("""
+                    fun save(obj: ${builder.get("entity")}) {
+                        client.preparedQuery("INSERT INTO ${builder.get("table")} (${l?.joinToString(", ")}) VALUES (${
+                            kotlin.run {
+                                val ll = (l.toMutableList())
+                                ll.replaceAll{ "$${l.indexOf(it) + 1}" }
+                                ll.joinToString(", ")
+                            }
+                        })").execute(Tuple.of(${
+                            kotlin.run {
+                                val ll = (l.toMutableList())
+                                ll.replaceAll{ "obj.$it" }
+                                ll.joinToString(", ")
+                            }
+                        }))
                     }    
                     """.trimIndent())
         }

@@ -37,6 +37,10 @@ class EntityProcessor(
                 propertiesMap.put(it.simpleName.asString(), it.type.toString())
             }
             val file = codeGenerator.createNewFile(Dependencies(true, classDeclaration.containingFile!!), packageName , className)
+            file.appendText("""
+                // [${propertiesMap.keys.joinToString(",")}]
+                
+            """.trimIndent())
             file.appendText(ClassBuilder(packageName, className)
                 .addImport("io.vertx.mutiny.sqlclient.Row")
                 .add { input: ClassBuilder -> generateExtension(input, propertiesMap, classDeclaration.simpleName.asString()) }
