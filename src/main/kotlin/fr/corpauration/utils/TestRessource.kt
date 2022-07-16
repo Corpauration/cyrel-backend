@@ -17,7 +17,7 @@ class TestRessource {
     @Inject
     lateinit var client: PgPool
 
-    @RepositoryGenerator(table = "test", id = Int::class, entity = BaseEntity::class)
+    @RepositoryGenerator(table = "test", id = Int::class, entity = TestEntity::class)
     val testRepository: Any by lazy {
         TestRepository(client)
     }
@@ -25,7 +25,7 @@ class TestRessource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApplicationScoped
-    fun all(): Multi<BaseEntity>? {
+    fun all(): Multi<TestEntity>? {
         return (testRepository as TestRepository).getAll()
     }
 
@@ -40,7 +40,7 @@ class TestRessource {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    fun getById(@PathParam("id") id: String): Uni<BaseEntity> {
+    fun getById(@PathParam("id") id: String): Uni<TestEntity> {
         return (testRepository as TestRepository).findById(id.toInt())
     }
 }

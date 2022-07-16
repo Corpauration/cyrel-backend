@@ -48,6 +48,7 @@ class RepositoryGeneratorProcessor(
                 .addImport("javax.enterprise.context.ApplicationScoped")
                 .addImport("javax.inject.Inject")
                 .addImport("io.vertx.mutiny.pgclient.PgPool")
+                .addImport("$packageName.from")
                 .set("table", table)
                 .set("id", id)
                 .set("entity", entity)
@@ -125,7 +126,7 @@ class RepositoryGeneratorProcessor(
                     return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
                         Multi.createFrom().iterable(set)
                     }).onItem().transform(Function<Any, ${builder.get("entity")}> { row: Any ->
-                        BaseEntity.StaticFunctions.from(row as Row) as ${builder.get("entity")}
+                        ${builder.get("entity")}.from(row as Row)
                     })
                 }
                 """.trimIndent())
@@ -163,7 +164,7 @@ class RepositoryGeneratorProcessor(
                     .addFunction("""
                     fun findById(id: ${builder.get("id")}): Uni<${builder.get("entity")}> {
                         return client.preparedQuery("SELECT * FROM ${builder.get("table")} WHERE id = ${'$'}1").execute(Tuple.of(id)).onItem().transform(RowSet<Row>::iterator).onItem()
-                        .transform<Any?>(Function<RowIterator<Row?>, Any?> { iterator: RowIterator<Row?> -> if (iterator.hasNext()) BaseEntity.StaticFunctions.from(iterator.next() as Row) else null }) as Uni<${builder.get("entity")}>    
+                        .transform<Any?>(Function<RowIterator<Row?>, Any?> { iterator: RowIterator<Row?> -> if (iterator.hasNext()) ${builder.get("entity")}.from(iterator.next() as Row) else null }) as Uni<${builder.get("entity")}>    
                     }    
                     """.trimIndent())
         }
