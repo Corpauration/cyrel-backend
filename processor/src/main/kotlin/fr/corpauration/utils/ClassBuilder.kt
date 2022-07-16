@@ -56,7 +56,7 @@ class ClassBuilder(val packageName: String, val className: String) {
     fun build(): String = """
     package $packageName
 
-    ${imports.joinToString("\n    ")}
+    ${imports.distinct().joinToString("\n    ")}
 
     /*
         This class was generated with ${
