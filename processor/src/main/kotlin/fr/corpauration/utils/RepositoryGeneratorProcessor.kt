@@ -61,6 +61,7 @@ class RepositoryGeneratorProcessor(
                 .add { input: ClassBuilder -> generateGetAll(input) }
                 .add { input: ClassBuilder -> generateGetIds(input) }
                 .add { input: ClassBuilder -> generateFindById(input) }
+                .add { input: ClassBuilder -> generateFindBy(input) }
                 .build())
 
             file.close()
@@ -123,6 +124,26 @@ class RepositoryGeneratorProcessor(
                     fun findById(id: ${builder.get("id")}): Uni<${builder.get("entity")}> {
                         return client.preparedQuery("SELECT * FROM ${builder.get("table")} WHERE id = ${'$'}1").execute(Tuple.of(id)).onItem().transform(RowSet<Row>::iterator).onItem()
                         .transform<Any?>(Function<RowIterator<Row?>, Any?> { iterator: RowIterator<Row?> -> if (iterator.hasNext()) ${builder.get("entity")}.from(iterator.next() as Row) else null }) as Uni<${builder.get("entity")}>    
+                    }    
+                    """.trimIndent())
+        }
+
+        fun generateFindBy(builder: ClassBuilder): ClassBuilder {
+            return builder
+                .addImport("io.smallrye.mutiny.Multi")
+                .addImport("io.smallrye.mutiny.Uni")
+                .addImport("io.vertx.mutiny.sqlclient.RowSet")
+                .addImport("io.vertx.mutiny.sqlclient.Row")
+                .addImport("java.util.function.Function")
+                .addImport("org.reactivestreams.Publisher")
+                .addFunction("""
+                    fun findBy(value: Any, field: String): Multi<${builder.get("entity")}> {
+                        val rowSet: Uni<RowSet<Row>> = client.preparedQuery("SELECT * FROM ${builder.get("table")} WHERE ${"\$field"} = $1").execute(Tuple.of(value))
+                        return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
+                            Multi.createFrom().iterable(set)
+                        }).onItem().transform(Function<Any, ${builder.get("entity")}> { row: Any ->
+                            ${builder.get("entity")}.from(row as Row)
+                        })
                     }    
                     """.trimIndent())
         }

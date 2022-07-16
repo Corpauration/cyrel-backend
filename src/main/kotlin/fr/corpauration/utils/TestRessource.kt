@@ -43,4 +43,11 @@ class TestRessource {
     fun getById(@PathParam("id") id: String): Uni<TestEntity> {
         return (testRepository as TestRepository).findById(id.toInt())
     }
+
+    @GET
+    @Path("/false")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getByDataFalse(): Multi<TestEntity> {
+        return (testRepository as TestRepository).findBy(false, "data")
+    }
 }
