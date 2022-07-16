@@ -15,13 +15,14 @@ class TestRessource {
     lateinit var client: PgPool
 
     @RepositoryGenerator(table = "test", id = String::class, entity = BaseEntity::class)
-    lateinit var testRepository: Any
+    val testRepository: Any by lazy {
+        TestRepository(client)
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApplicationScoped
     fun all(): Multi<BaseEntity>? {
-        testRepository = TestRepository(client)
         return (testRepository as TestRepository).getAll()
     }
 }
