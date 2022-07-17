@@ -3,13 +3,11 @@ package fr.corpauration.utils
 import fr.corpauration.group.GroupsResource
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
+import io.smallrye.mutiny.coroutines.awaitSuspending
 import io.vertx.mutiny.pgclient.PgPool
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
-import javax.ws.rs.GET
-import javax.ws.rs.Path
-import javax.ws.rs.PathParam
-import javax.ws.rs.Produces
+import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 
 @Path("/test")
@@ -49,5 +47,13 @@ class TestRessource {
     @Produces(MediaType.APPLICATION_JSON)
     fun getByDataFalse(): Multi<TestEntity> {
         return (testRepository as TestRepository).findBy(false, "data")
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    suspend fun add(entity: TestEntity): Int {
+        print("${entity.id} -> ${entity.data}")
+        (testRepository as TestRepository).save(entity).awaitSuspending()
+        return entity.id
     }
 }

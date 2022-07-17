@@ -173,8 +173,8 @@ class RepositoryGeneratorProcessor(
                 .addImport("java.util.function.Function")
                 .addImport("org.reactivestreams.Publisher")
                 .addFunction("""
-                    fun save(obj: ${builder.get("entity")}) {
-                        client.preparedQuery("INSERT INTO ${builder.get("table")} (${l?.joinToString(", ")}) VALUES (${
+                    fun save(obj: ${builder.get("entity")}): Uni<RowSet<Row>> {
+                        return client.preparedQuery("INSERT INTO ${builder.get("table")} (${l?.joinToString(", ")}) VALUES (${
                             kotlin.run {
                                 val ll = (l.toMutableList())
                                 ll.replaceAll{ "$${l.indexOf(it) + 1}" }
