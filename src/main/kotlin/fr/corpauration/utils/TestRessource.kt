@@ -56,4 +56,13 @@ class TestRessource {
         (testRepository as TestRepository).save(entity).awaitSuspending()
         return entity.id
     }
+
+    @POST
+    @Path("/update")
+    @Consumes(MediaType.APPLICATION_JSON)
+    suspend fun update(entity: TestEntity): Int {
+        print("${entity.id} -> ${entity.data}")
+        (testRepository as TestRepository).update(entity).awaitSuspending()
+        return entity.id
+    }
 }

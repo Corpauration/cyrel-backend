@@ -65,6 +65,7 @@ class RepositoryGeneratorProcessor(
                 .add { input: ClassBuilder -> generateFindById(input) }
                 .add { input: ClassBuilder -> generateFindBy(input) }
                 .add { input: ClassBuilder -> generateSave(input) }
+                .add { input: ClassBuilder -> generateUpdate(input) }
                 .build())
 
             file.close()
@@ -187,6 +188,47 @@ class RepositoryGeneratorProcessor(
                                 ll.joinToString(", ")
                             }
                         }))
+                    }    
+                    """.trimIndent())
+        }
+
+        fun generateUpdate(builder: ClassBuilder): ClassBuilder {
+            codeGenerator.generatedFile.forEach{ logger.warn(it.nameWithoutExtension) }
+            val line = codeGenerator.generatedFile
+                .filter { it.nameWithoutExtension == "${builder.get("entity")}Generated" }
+                .first()
+                .bufferedReader()
+                .useLines {
+                        lines: Sequence<String> ->
+                    lines
+                        .take(1)
+                        .toList()
+                        .first()
+                }
+            val l = Regex("\\[(.*)\\]")
+                .find(line)?.groupValues!![1]
+                .split(",")
+                .toTypedArray()
+                .filter { it != "id" }
+            val ll = (l.toMutableList())
+            ll.replaceAll{ "$it = $${l.indexOf(it) + 1}" }
+            return builder
+                .addImport("io.smallrye.mutiny.Multi")
+                .addImport("io.smallrye.mutiny.Uni")
+                .addImport("io.vertx.mutiny.sqlclient.RowSet")
+                .addImport("io.vertx.mutiny.sqlclient.Row")
+                .addImport("java.util.function.Function")
+                .addImport("org.reactivestreams.Publisher")
+                .addFunction("""
+                    fun update(obj: ${builder.get("entity")}): Uni<RowSet<Row>> {
+                        return client.preparedQuery("UPDATE ${builder.get("table")} SET ${ll.joinToString(", ")} WHERE id = $${l.size + 1}").execute(Tuple.of(${
+                    kotlin.run {
+                        val lll = (l.toMutableList())
+                        lll.replaceAll{ "obj.$it" }
+                        lll.add("obj.id")
+                        lll.joinToString(", ")
+                    }
+                }))
                     }    
                     """.trimIndent())
         }
