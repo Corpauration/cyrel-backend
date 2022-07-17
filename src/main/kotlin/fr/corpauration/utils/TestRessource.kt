@@ -65,4 +65,21 @@ class TestRessource {
         (testRepository as TestRepository).update(entity).awaitSuspending()
         return entity.id
     }
+
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    suspend fun removeWithEntity(entity: TestEntity): Int {
+        print("${entity.id} -> ${entity.data}")
+        (testRepository as TestRepository).delete(entity).awaitSuspending()
+        return entity.id
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    suspend fun removeWithId(@PathParam("id") id: Int): Int {
+        val entity = TestEntity(id = id)
+        (testRepository as TestRepository).delete(entity).awaitSuspending()
+        return entity.id
+    }
 }

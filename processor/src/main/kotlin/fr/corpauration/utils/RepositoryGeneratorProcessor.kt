@@ -66,6 +66,7 @@ class RepositoryGeneratorProcessor(
                 .add { input: ClassBuilder -> generateFindBy(input) }
                 .add { input: ClassBuilder -> generateSave(input) }
                 .add { input: ClassBuilder -> generateUpdate(input) }
+                .add { input: ClassBuilder -> generateDelete(input) }
                 .build())
 
             file.close()
@@ -229,6 +230,21 @@ class RepositoryGeneratorProcessor(
                         lll.joinToString(", ")
                     }
                 }))
+                    }    
+                    """.trimIndent())
+        }
+
+        fun generateDelete(builder: ClassBuilder): ClassBuilder {
+            return builder
+                .addImport("io.smallrye.mutiny.Multi")
+                .addImport("io.smallrye.mutiny.Uni")
+                .addImport("io.vertx.mutiny.sqlclient.RowSet")
+                .addImport("io.vertx.mutiny.sqlclient.Row")
+                .addImport("java.util.function.Function")
+                .addImport("org.reactivestreams.Publisher")
+                .addFunction("""
+                    fun delete(obj: ${builder.get("entity")}): Uni<RowSet<Row>> {
+                        return client.preparedQuery("DELETE FROM ${builder.get("table")} WHERE id = $1").execute(Tuple.of(obj.id))
                     }    
                     """.trimIndent())
         }
