@@ -51,6 +51,7 @@ class RepositoryGeneratorProcessor(
                 .addImport("javax.inject.Inject")
                 .addImport("io.vertx.mutiny.pgclient.PgPool")
                 .addImport("$packageName.from")
+                .addImport("java.util.UUID")
                 .set("table", table)
                 .set("id", id)
                 .set("entity", entity)
@@ -90,7 +91,7 @@ class RepositoryGeneratorProcessor(
                     return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
                         Multi.createFrom().iterable(set)
                     }).onItem().transform(Function<Any, ${builder.get("entity")}> { row: Any ->
-                        ${builder.get("entity")}.from(row as Row)
+                        ${builder.get("entity")}.from(row as Row, client)
                     })
                 }
                 """.trimIndent())
@@ -128,7 +129,7 @@ class RepositoryGeneratorProcessor(
                     .addFunction("""
                     fun findById(id: ${builder.get("id")}): Uni<${builder.get("entity")}> {
                         return client.preparedQuery("SELECT * FROM ${builder.get("table")} WHERE id = ${'$'}1").execute(Tuple.of(id)).onItem().transform(RowSet<Row>::iterator).onItem()
-                        .transform<Any?>(Function<RowIterator<Row?>, Any?> { iterator: RowIterator<Row?> -> if (iterator.hasNext()) ${builder.get("entity")}.from(iterator.next() as Row) else null }) as Uni<${builder.get("entity")}>    
+                        .transform<Any?>(Function<RowIterator<Row?>, Any?> { iterator: RowIterator<Row?> -> if (iterator.hasNext()) ${builder.get("entity")}.from(iterator.next() as Row, client) else null }) as Uni<${builder.get("entity")}>    
                     }    
                     """.trimIndent())
         }
@@ -147,7 +148,7 @@ class RepositoryGeneratorProcessor(
                         return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
                             Multi.createFrom().iterable(set)
                         }).onItem().transform(Function<Any, ${builder.get("entity")}> { row: Any ->
-                            ${builder.get("entity")}.from(row as Row)
+                            ${builder.get("entity")}.from(row as Row, client)
                         })
                     }    
                     """.trimIndent())

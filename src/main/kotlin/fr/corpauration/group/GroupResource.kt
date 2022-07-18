@@ -1,8 +1,6 @@
 package fr.corpauration.group
 
-import fr.corpauration.utils.BaseEntity
-import fr.corpauration.utils.BaseRepository
-import fr.corpauration.utils.BaseResource
+import fr.corpauration.utils.*
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import io.vertx.mutiny.pgclient.PgPool
@@ -22,15 +20,19 @@ class GroupResource : BaseResource() {
     @Inject
     lateinit var client: PgPool
 
+    @RepositoryGenerator(table = "groups", id = Int::class, entity = GroupEntity::class)
+    val groupRepository: Any by lazy {
+        GroupRepository(client)
+    }
+
     @GET
     fun hello() = "Hello from Cyrel Api"
 
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    fun getById(@PathParam("id") id: String): Uni<GroupsResource> {
-        val repo: BaseRepository<Int, BaseEntity> = BaseRepository(client, "test")
-        return repo.findById(id.toInt()) as Uni<GroupsResource>
+    fun getById(@PathParam("id") id: Int): Uni<GroupEntity> {
+        return (groupRepository as GroupRepository).findById(id)
     }
 }
 
@@ -40,18 +42,19 @@ class GroupsResource : BaseResource() {
     @Inject
     lateinit var client: PgPool
 
+    @Inject
+    lateinit var groupRepository: GroupRepository
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    fun get(): Multi<BaseEntity>? {
-        val repo: BaseRepository<Int, BaseEntity> = BaseRepository(client, "test")
-        return repo.getAll()
+    fun get(): Multi<GroupEntity>? {
+        return groupRepository.getAll()
     }
 
     @GET
     @Path("/ids")
     @Produces(MediaType.APPLICATION_JSON)
     fun getids(): Multi<Int>? {
-        val repo: BaseRepository<Int, BaseEntity> = BaseRepository(client, "test")
-        return repo.getIds()
+        return groupRepository.getIds()
     }
 }

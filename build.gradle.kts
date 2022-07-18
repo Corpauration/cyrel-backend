@@ -27,6 +27,7 @@ dependencies {
     implementation("io.quarkus:quarkus-resteasy-reactive")
     implementation("io.quarkus:quarkus-flyway")
     implementation("com.squareup:kotlinpoet:1.12.0")
+    implementation("io.smallrye.reactive:mutiny-kotlin")
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
 }
