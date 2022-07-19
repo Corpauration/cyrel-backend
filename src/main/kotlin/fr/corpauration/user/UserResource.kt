@@ -27,7 +27,10 @@ class UserResource : BaseResource() {
     }
 
     @GET
-    fun hello() = "Hello from Cyrel Api"
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getAll(): Multi<UserEntity> {
+        return (userRepository as UserRepository).getAll()
+    }
 
     @GET
     @Path("/{id}")

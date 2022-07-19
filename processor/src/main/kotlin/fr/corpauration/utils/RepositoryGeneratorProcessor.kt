@@ -90,9 +90,7 @@ class RepositoryGeneratorProcessor(
                     val rowSet: Uni<RowSet<Row>> = client.query("SELECT * FROM ${builder.get("table")}").execute()
                     return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
                         Multi.createFrom().iterable(set)
-                    }).onItem().transform(Function<Any, ${builder.get("entity")}> { row: Any ->
-                        ${builder.get("entity")}.from(row as Row, client)
-                    })
+                    }).flatMap { ${builder.get("entity")}.Companion.from(it as Row, client)!!.toMulti() }
                 }
                 """.trimIndent())
         }
@@ -128,8 +126,8 @@ class RepositoryGeneratorProcessor(
                     .addImport("org.reactivestreams.Publisher")
                     .addFunction("""
                     fun findById(id: ${builder.get("id")}): Uni<${builder.get("entity")}> {
-                        return client.preparedQuery("SELECT * FROM ${builder.get("table")} WHERE id = ${'$'}1").execute(Tuple.of(id)).onItem().transform(RowSet<Row>::iterator).onItem()
-                        .transform<Any?>(Function<RowIterator<Row?>, Any?> { iterator: RowIterator<Row?> -> if (iterator.hasNext()) ${builder.get("entity")}.from(iterator.next() as Row, client) else null }) as Uni<${builder.get("entity")}>    
+                        return client.preparedQuery("SELECT * FROM ${builder.get("table")} WHERE id = ${'$'}1").execute(Tuple.of(id)).onItem().transform(RowSet<Row>::iterator)
+                        .flatMap{ if (it.hasNext()) ${builder.get("entity")}.from(it.next() as Row, client) else null }
                     }    
                     """.trimIndent())
         }
@@ -147,9 +145,7 @@ class RepositoryGeneratorProcessor(
                         val rowSet: Uni<RowSet<Row>> = client.preparedQuery("SELECT * FROM ${builder.get("table")} WHERE ${"\$field"} = $1").execute(Tuple.of(value))
                         return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
                             Multi.createFrom().iterable(set)
-                        }).onItem().transform(Function<Any, ${builder.get("entity")}> { row: Any ->
-                            ${builder.get("entity")}.from(row as Row, client)
-                        })
+                        }).flatMap { ${builder.get("entity")}.Companion.from(it as Row, client)!!.toMulti() }
                     }    
                     """.trimIndent())
         }

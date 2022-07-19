@@ -87,24 +87,33 @@ class EntityProcessor(
                 .addImport("kotlinx.coroutines.launch")
                 .addImport("kotlinx.coroutines.runBlocking")
                 .addImport("kotlinx.coroutines.delay")
+                .addImport("io.smallrye.mutiny.Uni")
                 .addExtension("""
-                    fun $originalClass.Companion.from(row: Row, client: PgPool): $originalClass = runBlocking {
+                    fun $originalClass.Companion.from(row: Row, client: PgPool): Uni<$originalClass> {
                         val o = $originalClass($str)
-                        launch {
+                        return Uni.combine().all().unis<$originalClass>(Uni.createFrom().item(o)${
+                            kotlin.run {
+                                var str = ""
+                                manyToManyMeta.keys.forEachIndexed { i, it -> str += ", o.load_$it(client)" }
+                                str
+                            }
+                        }).combinedWith {
                             ${
                                 kotlin.run {
                                     var str = ""
-                                    manyToManyMeta.keys.forEach { str += "o.load_$it(client)\n" }
+                                    manyToManyMeta.keys.forEachIndexed { i, it -> str += "(it[0] as $originalClass).$it = (it[${i + 1}] as $originalClass).$it\n" }
                                     str
                                 }
-            
                             }
-                            
+                            return@combinedWith it[0] as $originalClass
                         }
-                        
-                        return@runBlocking o
                     }
                 """.trimIndent())
+                /*.addExtension("""
+                    fun $originalClass.load(client: PgPool): Uni<$originalClass> {
+                        Uni
+                    }
+                """.trimIndent())*/
         }
 
         fun generateExtensionManyToMany(
@@ -128,13 +137,11 @@ class EntityProcessor(
                     .addImport("${metadata["import"]!!}.from")
                     .addExtension(
                     """
-                    fun $originalClass.load_$prop(client: PgPool): Uni<MutableList<${metadata["type"]}>> {
+                    fun $originalClass.load_$prop(client: PgPool): Uni<$originalClass> {
                         val rowSet: Uni<RowSet<Row>> = client.preparedQuery("SELECT o.* FROM ${metadata["table"]!!.split("_")[1]} AS o JOIN ${metadata["table"]} AS oo ON oo.ref = o.id WHERE oo.id = $1").execute(Tuple.of(id))
                         return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
                             Multi.createFrom().iterable(set)
-                        }).onItem().transform(Function<Any, ${metadata["type"]}> { row: Any ->
-                            ${metadata["type"]}.from(row as Row, client)
-                        }).collect().asList()
+                        }).flatMap { ${metadata["type"]}.from(it as Row, client).toMulti() }.collect().asList().onItem().transform { this.$prop = it.filterNotNull(); this }
                     }
                 """.trimIndent())
                     .addExtension("""
