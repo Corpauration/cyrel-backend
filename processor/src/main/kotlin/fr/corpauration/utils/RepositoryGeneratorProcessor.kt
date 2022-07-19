@@ -172,20 +172,23 @@ class RepositoryGeneratorProcessor(
                 .addImport("java.util.function.Function")
                 .addImport("org.reactivestreams.Publisher")
                 .addFunction("""
-                    fun save(obj: ${builder.get("entity")}): Uni<RowSet<Row>> {
-                        return client.preparedQuery("INSERT INTO ${builder.get("table")} (${l?.joinToString(", ")}) VALUES (${
-                            kotlin.run {
-                                val ll = (l.toMutableList())
-                                ll.replaceAll{ "$${l.indexOf(it) + 1}" }
-                                ll.joinToString(", ")
-                            }
-                        })").execute(Tuple.of(${
-                            kotlin.run {
-                                val ll = (l.toMutableList())
-                                ll.replaceAll{ "obj.$it" }
-                                ll.joinToString(", ")
-                            }
-                        }))
+                    fun save(obj: ${builder.get("entity")}): Uni<Void> {
+                        return Uni.combine().all().unis<Void>(
+                            client.preparedQuery("INSERT INTO ${builder.get("table")} (${l?.joinToString(", ")}) VALUES (${
+                                kotlin.run {
+                                    val ll = (l.toMutableList())
+                                    ll.replaceAll{ "$${l.indexOf(it) + 1}" }
+                                    ll.joinToString(", ")
+                                }
+                            })").execute(Tuple.of(${
+                                kotlin.run {
+                                    val ll = (l.toMutableList())
+                                    ll.replaceAll{ "obj.$it" }
+                                    ll.joinToString(", ")
+                                }
+                            })),
+                            obj.save(client)
+                        ).discardItems()
                     }    
                     """.trimIndent())
         }
@@ -218,15 +221,18 @@ class RepositoryGeneratorProcessor(
                 .addImport("java.util.function.Function")
                 .addImport("org.reactivestreams.Publisher")
                 .addFunction("""
-                    fun update(obj: ${builder.get("entity")}): Uni<RowSet<Row>> {
-                        return client.preparedQuery("UPDATE ${builder.get("table")} SET ${ll.joinToString(", ")} WHERE id = $${l.size + 1}").execute(Tuple.of(${
-                    kotlin.run {
-                        val lll = (l.toMutableList())
-                        lll.replaceAll{ "obj.$it" }
-                        lll.add("obj.id")
-                        lll.joinToString(", ")
-                    }
-                }))
+                    fun update(obj: ${builder.get("entity")}): Uni<Void> {
+                        return Uni.combine().all().unis<Void>(
+                            client.preparedQuery("UPDATE ${builder.get("table")} SET ${ll.joinToString(", ")} WHERE id = $${l.size + 1}").execute(Tuple.of(${
+                                kotlin.run {
+                                    val lll = (l.toMutableList())
+                                    lll.replaceAll{ "obj.$it" }
+                                    lll.add("obj.id")
+                                    lll.joinToString(", ")
+                                }
+                            })),
+                            obj.save(client)
+                        ).discardItems()
                     }    
                     """.trimIndent())
         }
@@ -240,8 +246,11 @@ class RepositoryGeneratorProcessor(
                 .addImport("java.util.function.Function")
                 .addImport("org.reactivestreams.Publisher")
                 .addFunction("""
-                    fun delete(obj: ${builder.get("entity")}): Uni<RowSet<Row>> {
-                        return client.preparedQuery("DELETE FROM ${builder.get("table")} WHERE id = $1").execute(Tuple.of(obj.id))
+                    fun delete(obj: ${builder.get("entity")}): Uni<Void> {
+                        return Uni.combine().all().unis<Void>(
+                            obj.delete(client),
+                            client.preparedQuery("DELETE FROM ${builder.get("table")} WHERE id = $1").execute(Tuple.of(obj.id))
+                        ).discardItems()
                     }    
                     """.trimIndent())
         }

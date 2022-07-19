@@ -109,11 +109,28 @@ class EntityProcessor(
                         }
                     }
                 """.trimIndent())
-                /*.addExtension("""
-                    fun $originalClass.load(client: PgPool): Uni<$originalClass> {
-                        Uni
+                .addExtension("""
+                    fun $originalClass.save(client: PgPool): Uni<Void> {
+                        return Uni.combine().all().unis<Void>(${
+                            kotlin.run {
+                                var str = ""
+                                manyToManyMeta.keys.forEachIndexed { i, it -> str += if (i > 0) ", " else {""} + "this.save_$it(client)" }
+                                str
+                            }
+                        }).discardItems()
                     }
-                """.trimIndent())*/
+                """.trimIndent())
+                .addExtension("""
+                    fun $originalClass.delete(client: PgPool): Uni<Void> {
+                        return Uni.combine().all().unis<Void>(${
+                    kotlin.run {
+                        var str = ""
+                        manyToManyMeta.keys.forEachIndexed { i, it -> str += if (i > 0) ", " else {""} + "this.delete_$it(client)" }
+                        str
+                    }
+                }).discardItems()
+                    }
+                """.trimIndent())
         }
 
         fun generateExtensionManyToMany(
@@ -145,13 +162,22 @@ class EntityProcessor(
                     }
                 """.trimIndent())
                     .addExtension("""
-                    suspend fun $originalClass.save_$prop(client: PgPool) {
-                        client.withTransaction{
+                    fun $originalClass.save_$prop(client: PgPool): Uni<Void> {
+                        return client.withTransaction{
                             val queries = ArrayList<Uni<RowSet<Row>>>()
                             queries.add(it.preparedQuery("DELETE FROM ${metadata["table"]} WHERE id = $1").execute(Tuple.of(this.id)))
                             this.$prop.forEach{ v -> queries.add(it.preparedQuery("INSERT INTO ${metadata["table"]} (id, ref) VALUES ($1, $2)").execute(Tuple.of(this.id, v.id))) }
                             Uni.combine().all().unis<RowSet<Row>>(queries).discardItems()
-                        }.awaitSuspending()
+                        }
+                    }
+                    """.trimIndent())
+                    .addExtension("""
+                    fun $originalClass.delete_$prop(client: PgPool): Uni<Void> {
+                        return client.withTransaction{
+                            val queries = ArrayList<Uni<RowSet<Row>>>()
+                            queries.add(it.preparedQuery("DELETE FROM ${metadata["table"]} WHERE id = $1").execute(Tuple.of(this.id)))
+                            Uni.combine().all().unis<RowSet<Row>>(queries).discardItems()
+                        }
                     }
                     """.trimIndent())
             }
