@@ -57,6 +57,17 @@ class RepositoryGeneratorProcessor(
                 .set("entity", entity)
                 .addClassAnotation("@ApplicationScoped")
                 .addConstructorProprieties("client", "PgPool")
+                .addCompanion("""
+                    companion object {
+                        lateinit var INSTANCE: $className
+                        val TABLE = "$table"
+                    }
+                """.trimIndent())
+                .addInit("""
+                    init {
+                        $className.INSTANCE = this
+                    }
+                """.trimIndent())
                 /*.addField("""
                     @Inject
                     lateinit var client: PgPool

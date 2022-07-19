@@ -1,6 +1,7 @@
 package fr.corpauration.group
 
 import fr.corpauration.utils.Entity
+import fr.corpauration.utils.OneToOne
 import java.util.UUID
 
 @Entity
@@ -8,10 +9,11 @@ class GroupEntity {
     var id: Int
     var name: String
     var referent: UUID?
-    var parent: Int?
+    @OneToOne(id = Int::class)
+    var parent: GroupEntity?
     var private: Boolean
 
-    constructor(id: Int = -1, name: String = "", referent: UUID? = null, parent: Int? = null, private: Boolean = false) {
+    constructor(id: Int = -1, name: String = "", referent: UUID? = null, parent: GroupEntity? = null, private: Boolean = false) {
         this.id = id
         this.name = name
         this.referent = referent

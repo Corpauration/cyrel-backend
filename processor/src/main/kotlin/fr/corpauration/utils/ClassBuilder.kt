@@ -11,6 +11,10 @@ class ClassBuilder(val packageName: String, val className: String) {
 
     private val fields: ArrayList<String> = ArrayList()
 
+    private val inits: ArrayList<String> = ArrayList()
+
+    private val companions: ArrayList<String> = ArrayList()
+
     private val functions: ArrayList<String> = ArrayList()
 
     private val variables: HashMap<String, Any?> = HashMap()
@@ -34,6 +38,16 @@ class ClassBuilder(val packageName: String, val className: String) {
 
     fun addField(field: String): ClassBuilder {
         fields.add(field)
+        return this
+    }
+
+    fun addInit(init: String): ClassBuilder {
+        inits.add(init)
+        return this
+    }
+
+    fun addCompanion(companion: String): ClassBuilder {
+        companions.add(companion)
         return this
     }
 
@@ -84,6 +98,10 @@ class ClassBuilder(val packageName: String, val className: String) {
     } else ""
     } {
         ${fields.joinToString("\n        ")}
+        
+        ${inits.joinToString("\n\n        ")}
+        
+        ${companions.joinToString("\n\n        ")}
 
         ${functions.joinToString("\n\n        ")}
     }

@@ -3,6 +3,7 @@ package fr.corpauration.group
 import fr.corpauration.utils.*
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
+import io.smallrye.mutiny.coroutines.awaitSuspending
 import io.vertx.mutiny.pgclient.PgPool
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
