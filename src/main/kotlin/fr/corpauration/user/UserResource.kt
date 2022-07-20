@@ -23,8 +23,11 @@ class UserResource : BaseResource() {
 
     @RepositoryGenerator(table = "users", id = UUID::class, entity = UserEntity::class)
     val userRepository: Any by lazy {
+        groupRepository = GroupRepository(client)
         UserRepository(client)
     }
+
+    lateinit var groupRepository: GroupRepository
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
