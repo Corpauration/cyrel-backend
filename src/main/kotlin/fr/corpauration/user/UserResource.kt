@@ -1,10 +1,14 @@
 package fr.corpauration.user
 
-import fr.corpauration.utils.*
+import fr.corpauration.group.GroupRepository
+import fr.corpauration.utils.BaseResource
+import fr.corpauration.utils.RepositoryGenerator
+import io.quarkus.security.Authenticated
+import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import io.vertx.mutiny.pgclient.PgPool
-import java.util.UUID
+import java.util.*
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.GET
@@ -14,6 +18,7 @@ import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 
 @Path("/user")
+@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
 class UserResource : BaseResource() {

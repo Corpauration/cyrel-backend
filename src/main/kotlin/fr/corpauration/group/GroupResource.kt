@@ -1,6 +1,7 @@
 package fr.corpauration.group
 
 import fr.corpauration.utils.*
+import io.quarkus.security.Authenticated
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import io.smallrye.mutiny.coroutines.awaitSuspending
@@ -14,6 +15,7 @@ import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 
 @Path("/group")
+@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
 class GroupResource : BaseResource() {
@@ -38,6 +40,7 @@ class GroupResource : BaseResource() {
 }
 
 @Path("/groups")
+@Authenticated
 class GroupsResource : BaseResource() {
 
     @Inject
