@@ -15,6 +15,8 @@ val quarkusPlatformArtifactId: String by project
 val quarkusPlatformVersion: String by project
 
 dependencies {
+    implementation("io.quarkus:quarkus-keycloak-authorization")
+    implementation("io.quarkus:quarkus-oidc")
     implementation(kotlin("stdlib-jdk8"))
     implementation(project(":processor"))
     ksp(project(":processor"))
