@@ -26,12 +26,11 @@ class UserResource : BaseResource() {
     @Inject
     lateinit var client: PgPool
 
+    @Inject
     @RepositoryGenerator(table = "users", id = UUID::class, entity = UserEntity::class)
-    val userRepository: Any by lazy {
-        groupRepository = GroupRepository(client)
-        UserRepository(client)
-    }
+    lateinit var userRepository: UserRepository
 
+    @Inject
     lateinit var groupRepository: GroupRepository
 
     @GET

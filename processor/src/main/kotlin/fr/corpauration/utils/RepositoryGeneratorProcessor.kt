@@ -2,14 +2,27 @@ package fr.corpauration.utils
 
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.*
-import com.google.devtools.ksp.validate
+import com.google.devtools.ksp.visitor.KSValidateVisitor
 import java.io.OutputStream
-import java.util.*
-import kotlin.collections.ArrayList
 
 
 fun OutputStream.appendText(str: String) {
     this.write(str.toByteArray())
+}
+
+fun KSNode.validate2(predicate: (KSNode?, KSNode) -> Boolean = { _, _ -> true }): Boolean {
+    class CustomValidator(predicate: (KSNode?, KSNode) -> Boolean) : KSValidateVisitor(predicate) {
+        override fun visitTypeReference(typeReference: KSTypeReference, data: KSNode?): Boolean {
+            return true
+        }
+
+        override fun visitValueArgument(valueArgument: KSValueArgument, data: KSNode?): Boolean {
+            return true
+        }
+    }
+
+
+    return this.accept(CustomValidator(predicate), null)
 }
 
 class RepositoryGeneratorProcessor(
@@ -24,9 +37,9 @@ class RepositoryGeneratorProcessor(
         symbols.forEach {
             action: KSAnnotated -> logger.warn("annotation found with ${action::class}", action.parent)
         }
-        val ret = symbols.filter { !it.validate() }.toList()
+        val ret = symbols.filter { !it.validate2() }.toList()
         symbols
-            .filter { it is KSPropertyDeclaration && it.validate() }
+            .filter { it is KSPropertyDeclaration/* && it.validate2() */}
             .forEach { it.accept(RepositoryGeneratorVisitor(), it.annotations.find {
                 predicate: KSAnnotation -> predicate.shortName.asString() == "RepositoryGenerator"
             }) }
@@ -56,7 +69,7 @@ class RepositoryGeneratorProcessor(
                 .set("id", id)
                 .set("entity", entity)
                 .addClassAnotation("@ApplicationScoped")
-                .addConstructorProprieties("client", "PgPool")
+//                .addConstructorProprieties("client", "PgPool")
                 .addCompanion("""
                     companion object {
                         lateinit var INSTANCE: $className
@@ -68,10 +81,10 @@ class RepositoryGeneratorProcessor(
                         $className.INSTANCE = this
                     }
                 """.trimIndent())
-                /*.addField("""
+                .addField("""
                     @Inject
                     lateinit var client: PgPool
-                """.trimIndent())*/
+                """.trimIndent())
                 .add { input: ClassBuilder -> generateGetAll(input) }
                 .add { input: ClassBuilder -> generateGetIds(input) }
                 .add { input: ClassBuilder -> generateFindById(input) }

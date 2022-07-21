@@ -23,10 +23,9 @@ class GroupResource : BaseResource() {
     @Inject
     lateinit var client: PgPool
 
+    @Inject
     @RepositoryGenerator(table = "groups", id = Int::class, entity = GroupEntity::class)
-    val groupRepository: Any by lazy {
-        GroupRepository(client)
-    }
+    lateinit var groupRepository: GroupRepository
 
     @GET
     fun hello() = "Hello from Cyrel Api"

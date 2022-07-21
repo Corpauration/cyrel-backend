@@ -15,10 +15,9 @@ class TestRessource {
     @Inject
     lateinit var client: PgPool
 
+    @Inject
     @RepositoryGenerator(table = "test", id = Int::class, entity = TestEntity::class)
-    val testRepository: Any by lazy {
-        TestRepository(client)
-    }
+    lateinit var testRepository: TestRepository
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
