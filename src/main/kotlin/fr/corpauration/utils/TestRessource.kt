@@ -23,7 +23,7 @@ class TestRessource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApplicationScoped
     fun all(): Multi<TestEntity>? {
-        return (testRepository as TestRepository).getAll()
+        return testRepository.getAll()
     }
 
     @Path("/ids")
@@ -31,28 +31,28 @@ class TestRessource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApplicationScoped
     fun ids(): Multi<Int>? {
-        return (testRepository as TestRepository).getIds()
+        return testRepository.getIds()
     }
 
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     fun getById(@PathParam("id") id: String): Uni<TestEntity> {
-        return (testRepository as TestRepository).findById(id.toInt())
+        return testRepository.findById(id.toInt())
     }
 
     @GET
     @Path("/false")
     @Produces(MediaType.APPLICATION_JSON)
     fun getByDataFalse(): Multi<TestEntity> {
-        return (testRepository as TestRepository).findBy(false, "data")
+        return testRepository.findBy(false, "data")
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     suspend fun add(entity: TestEntity): Int {
         print("${entity.id} -> ${entity.data}")
-        (testRepository as TestRepository).save(entity).awaitSuspending()
+        testRepository.save(entity).awaitSuspending()
         return entity.id
     }
 
@@ -61,7 +61,7 @@ class TestRessource {
     @Consumes(MediaType.APPLICATION_JSON)
     suspend fun update(entity: TestEntity): Int {
         print("${entity.id} -> ${entity.data}")
-        (testRepository as TestRepository).update(entity).awaitSuspending()
+        testRepository.update(entity).awaitSuspending()
         return entity.id
     }
 
@@ -69,7 +69,7 @@ class TestRessource {
     @Consumes(MediaType.APPLICATION_JSON)
     suspend fun removeWithEntity(entity: TestEntity): Int {
         print("${entity.id} -> ${entity.data}")
-        (testRepository as TestRepository).delete(entity).awaitSuspending()
+        testRepository.delete(entity).awaitSuspending()
         return entity.id
     }
 
@@ -78,7 +78,7 @@ class TestRessource {
     @Produces(MediaType.APPLICATION_JSON)
     suspend fun removeWithId(@PathParam("id") id: Int): Int {
         val entity = TestEntity(id = id)
-        (testRepository as TestRepository).delete(entity).awaitSuspending()
+        testRepository.delete(entity).awaitSuspending()
         return entity.id
     }
 }

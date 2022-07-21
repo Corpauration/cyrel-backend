@@ -34,7 +34,7 @@ class GroupResource : BaseResource() {
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     fun getById(@PathParam("id") id: Int): Uni<GroupEntity> {
-        return (groupRepository as GroupRepository).findById(id)
+        return groupRepository.findById(id)
     }
 }
 

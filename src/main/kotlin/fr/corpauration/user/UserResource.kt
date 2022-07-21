@@ -36,13 +36,13 @@ class UserResource : BaseResource() {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     fun getAll(): Multi<UserEntity> {
-        return (userRepository as UserRepository).getAll()
+        return userRepository.getAll()
     }
 
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     fun getById(@PathParam("id") id: UUID): Uni<UserEntity> {
-        return (userRepository as UserRepository).findById(id)
+        return userRepository.findById(id)
     }
 }
