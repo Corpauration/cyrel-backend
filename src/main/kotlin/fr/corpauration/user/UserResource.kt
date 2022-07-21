@@ -45,4 +45,12 @@ class UserResource : BaseResource() {
     fun getById(@PathParam("id") id: UUID): Uni<UserEntity> {
         return userRepository.findById(id)
     }
+
+    @GET
+    @Path("/isRegistered")
+    fun isRegistered(): Uni<Boolean> {
+        return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem().transform {
+            it.size == 1
+        }
+    }
 }
