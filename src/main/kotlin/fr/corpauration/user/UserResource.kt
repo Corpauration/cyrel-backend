@@ -31,6 +31,9 @@ class UserResource : BaseResource() {
     lateinit var userRepository: UserRepository
 
     @Inject
+    lateinit var identity: SecurityIdentity
+
+    @Inject
     lateinit var groupRepository: GroupRepository
 
     @GET
