@@ -165,8 +165,9 @@ class RepositoryGeneratorProcessor(
                 .addImport("java.util.function.Function")
                 .addImport("org.reactivestreams.Publisher")
                 .addFunction("""
-                    fun findBy(value: Any, field: String): Multi<${builder.get("entity")}> {
-                        val rowSet: Uni<RowSet<Row>> = client.preparedQuery("SELECT * FROM ${builder.get("table")} WHERE ${"\$field"} = $1").execute(Tuple.of(value))
+                    fun findBy(value: Any?, field: String): Multi<${builder.get("entity")}> {
+                        val rowSet: Uni<RowSet<Row>> = if (value != null) client.preparedQuery("SELECT * FROM ${builder.get("table")} WHERE ${"\$field"} = $1").execute(Tuple.of(value))
+                            else client.query("SELECT * FROM ${builder.get("table")} WHERE ${"\$field"} IS NULL").execute()
                         return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
                             Multi.createFrom().iterable(set)
                         }).flatMap { ${builder.get("entity")}.Companion.from(it as Row, client)!!.toMulti() }
