@@ -60,4 +60,11 @@ class GroupsResource : BaseResource() {
     fun getids(): Multi<Int>? {
         return groupRepository.getIds()
     }
+
+    @GET
+    @Path("/parents")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getParents(): Multi<GroupEntity> {
+        return groupRepository.findBy(null, "parent");
+    }
 }
