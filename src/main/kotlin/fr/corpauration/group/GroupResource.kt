@@ -1,7 +1,9 @@
 package fr.corpauration.group
 
+import fr.corpauration.user.UserRepository
 import fr.corpauration.utils.*
 import io.quarkus.security.Authenticated
+import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import io.smallrye.mutiny.coroutines.awaitSuspending
@@ -27,6 +29,12 @@ class GroupResource : BaseResource() {
     @RepositoryGenerator(table = "groups", id = Int::class, entity = GroupEntity::class)
     lateinit var groupRepository: GroupRepository
 
+    @Inject
+    lateinit var userRepository: UserRepository
+
+    @Inject
+    lateinit var identity: SecurityIdentity
+
     @GET
     fun hello() = "Hello from Cyrel Api"
 
@@ -42,6 +50,21 @@ class GroupResource : BaseResource() {
     @Produces(MediaType.APPLICATION_JSON)
     fun getChildren(@PathParam("id") id: Int): Multi<GroupEntity> {
         return groupRepository.findBy(id, "parent")
+    }
+
+    @GET
+    @Path("/{id}/join")
+    // Here it will need the annotation to check if user exist
+    @Produces(MediaType.APPLICATION_JSON)
+    fun join(@PathParam("id") id: Int): Uni<Boolean> {
+        return groupRepository.findById(id).flatMap { group ->
+            if (!group.private) userRepository.findBy(identity.principal.name, "email").collect().asList().flatMap {
+                if (it.size == 1) {
+                    it[0].groups = it[0].groups.plus(group)
+                    userRepository.update(it[0]).flatMap { Uni.createFrom().item(true) }
+                } else throw Exception("User is not registered")
+            } else Uni.createFrom().item(false)
+        }
     }
 }
 
