@@ -231,6 +231,7 @@ class EntityProcessor(
                     .addImport("org.reactivestreams.Publisher")
                     .addImport("io.vertx.mutiny.sqlclient.Tuple")
                     .addImport("${metadata["import"]!!}.${metadata["type"]}")
+                    .addImport("${metadata["import"]!!}.${metadata["repository"]}")
                     .addImport("${metadata["import"]!!}.from")
                     .addExtension("""
                     fun $originalClass.save_$prop(client: PgPool): Uni<Void> {
