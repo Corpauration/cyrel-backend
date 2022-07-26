@@ -36,6 +36,14 @@ class UserResource : BaseResource() {
     lateinit var userRepository: UserRepository
 
     @Inject
+    @RepositoryGenerator(table = "students", id = UUID::class, entity = StudentEntity::class)
+    lateinit var studentRepository: StudentRepository
+
+    @Inject
+    @RepositoryGenerator(table = "professors", id = UUID::class, entity = ProfessorEntity::class)
+    lateinit var professorRepository: ProfessorRepository
+
+    @Inject
     lateinit var identity: SecurityIdentity
 
     @Inject
@@ -76,10 +84,14 @@ class UserResource : BaseResource() {
                     ) else null,
                     type = userInfo.getLong("person_type").toInt()
                 )
-                userRepository.save(user)
+                userRepository.save(user).flatMap {
+                    when (userInfo.getLong("person_type").toInt()) {
+                        UserType.STUDENT.ordinal -> studentRepository.save(StudentEntity(id = user.id, student_id = userInfo.getLong("student_id").toInt()))
+                        UserType.PROFESSOR.ordinal -> professorRepository.save(ProfessorEntity(id = user.id))
+                        else -> throw Exception("Unknown person type")
+                    }
+                }
             } else throw Exception("User already registered")
         }.awaitSuspending()
-//        return (identity.attributes["userinfo"]!! as UserInfo).getLong("student_id")
-//        return (identity.attributes["userinfo"]!! as UserInfo)
     }
 }
