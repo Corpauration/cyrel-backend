@@ -2,6 +2,7 @@ package fr.corpauration.user
 
 import com.fasterxml.jackson.databind.JsonNode
 import fr.corpauration.group.GroupRepository
+import fr.corpauration.utils.AccountExist
 import fr.corpauration.utils.BaseResource
 import fr.corpauration.utils.RepositoryGenerator
 import io.quarkus.oidc.UserInfo
@@ -50,12 +51,14 @@ class UserResource : BaseResource() {
     lateinit var groupRepository: GroupRepository
 
     @GET
+    @AccountExist
     @Produces(MediaType.APPLICATION_JSON)
     fun getAll(): Multi<UserEntity> {
         return userRepository.getAll()
     }
 
     @GET
+    @AccountExist
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     fun getById(@PathParam("id") id: UUID): Uni<UserEntity> {
