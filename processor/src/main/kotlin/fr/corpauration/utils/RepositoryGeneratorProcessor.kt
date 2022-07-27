@@ -118,6 +118,8 @@ class RepositoryGeneratorProcessor(
         }
 
         fun generateGetAll(builder: ClassBuilder, dbFields: ArrayList<String>): ClassBuilder {
+            val fields = dbFields.toMutableList()
+            fields.replaceAll { "\\\"$it\\\"" }
             return builder
                 .addImport("io.smallrye.mutiny.Multi")
                 .addImport("io.smallrye.mutiny.Uni")
@@ -127,7 +129,7 @@ class RepositoryGeneratorProcessor(
                 .addImport("org.reactivestreams.Publisher")
                 .addFunction("""
                 fun getAll(): Multi<${builder.get("entity")}> {
-                    val rowSet: Uni<RowSet<Row>> = client.query("SELECT ${dbFields.joinToString(", ")} FROM ${builder.get("table")}").execute()
+                    val rowSet: Uni<RowSet<Row>> = client.query("SELECT ${fields.joinToString(", ")} FROM ${builder.get("table")}").execute()
                     return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
                         Multi.createFrom().iterable(set)
                     }).flatMap { ${builder.get("entity")}.Companion.from(it as Row, client)!!.toMulti() }
@@ -156,6 +158,8 @@ class RepositoryGeneratorProcessor(
         }
 
         fun generateFindById(builder: ClassBuilder, dbFields: ArrayList<String>): ClassBuilder {
+            val fields = dbFields.toMutableList()
+            fields.replaceAll { "\\\"$it\\\"" }
             return builder.addImport("io.smallrye.mutiny.Multi")
                     .addImport("io.smallrye.mutiny.Uni")
                     .addImport("io.vertx.mutiny.sqlclient.RowSet")
@@ -166,13 +170,15 @@ class RepositoryGeneratorProcessor(
                     .addImport("org.reactivestreams.Publisher")
                     .addFunction("""
                     fun findById(id: ${builder.get("id")}): Uni<${builder.get("entity")}> {
-                        return client.preparedQuery("SELECT ${dbFields.joinToString(", ")} FROM ${builder.get("table")} WHERE id = ${'$'}1").execute(Tuple.of(id)).onItem().transform(RowSet<Row>::iterator)
+                        return client.preparedQuery("SELECT ${fields.joinToString(", ")} FROM ${builder.get("table")} WHERE id = ${'$'}1").execute(Tuple.of(id)).onItem().transform(RowSet<Row>::iterator)
                         .flatMap{ if (it.hasNext()) ${builder.get("entity")}.from(it.next() as Row, client) else null }
                     }    
                     """.trimIndent())
         }
 
         fun generateFindBy(builder: ClassBuilder, dbFields: ArrayList<String>): ClassBuilder {
+            val fields = dbFields.toMutableList()
+            fields.replaceAll { "\\\"$it\\\"" }
             return builder
                 .addImport("io.smallrye.mutiny.Multi")
                 .addImport("io.smallrye.mutiny.Uni")
@@ -183,7 +189,7 @@ class RepositoryGeneratorProcessor(
                 .addFunction("""
                     fun findBy(value: Any?, field: String): Multi<${builder.get("entity")}> {
                         val rowSet: Uni<RowSet<Row>> = if (value != null) client.preparedQuery("SELECT * FROM ${builder.get("table")} WHERE ${"\$field"} = $1").execute(Tuple.of(value))
-                            else client.query("SELECT ${dbFields.joinToString(", ")} FROM ${builder.get("table")} WHERE ${"\$field"} IS NULL").execute()
+                            else client.query("SELECT ${fields.joinToString(", ")} FROM ${builder.get("table")} WHERE ${"\$field"} IS NULL").execute()
                         return rowSet.onItem().transformToMulti(Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
                             Multi.createFrom().iterable(set)
                         }).flatMap { ${builder.get("entity")}.Companion.from(it as Row, client)!!.toMulti() }
