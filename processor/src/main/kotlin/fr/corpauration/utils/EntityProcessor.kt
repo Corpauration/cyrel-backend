@@ -53,6 +53,8 @@ class EntityProcessor(
                     m["repository"] = if (m["type"]!!.contains("Entity")) m["type"]!!.replace("Entity", "Repository") else {logger.error("@OneToOne is not on an entity but on ${m["type"]}", classDeclaration); ""}
                     m["id"] = it.annotations.find { it.shortName.asString() == "OneToOne" }!!.arguments.find { it.name!!.asString() == "id" }?.value.toString()
                     oneToOneMeta[it.simpleName.asString()] = m
+                } else if (it.annotations.find { it.shortName.asString() == "Lazy" } != null) {
+//                    propertiesMap.put(it.simpleName.asString(), it.type.toString())
                 } else {
                     propertiesMap.put(it.simpleName.asString(), it.type.toString() + if (it.type.resolve().isMarkedNullable) "?" else "")
                 }
