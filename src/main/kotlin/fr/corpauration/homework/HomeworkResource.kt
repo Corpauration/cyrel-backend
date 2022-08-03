@@ -4,6 +4,7 @@ import fr.corpauration.group.GroupRepository
 import fr.corpauration.utils.AccountExist
 import fr.corpauration.utils.RepositoryGenerator
 import io.quarkus.security.Authenticated
+import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
@@ -32,5 +33,24 @@ class HomeworkResource {
     @Produces(MediaType.APPLICATION_JSON)
     fun getById(@PathParam("id") id: UUID): Uni<HomeworkEntity> {
         return homeworkRepository.findById(id).flatMap { it.loadLazy() }
+    }
+}
+
+@Path("/homeworks")
+@Authenticated
+@Produces(MediaType.APPLICATION_JSON)
+@ApplicationScoped
+class HomeworksResource {
+    @Inject
+    lateinit var homeworkRepository: HomeworkRepository
+
+    @Inject
+    lateinit var groupRepository: GroupRepository
+
+    @GET
+    @AccountExist
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getAll(): Multi<HomeworkEntity> {
+        return homeworkRepository.getAll()
     }
 }
