@@ -16,7 +16,6 @@ import javax.ws.rs.core.MediaType
 
 @Path("/homework")
 @Authenticated
-//@AccountExist
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
 class HomeworkResource {
@@ -29,6 +28,7 @@ class HomeworkResource {
 
     @GET
     @Path("/{id}")
+    @AccountExist
     @Produces(MediaType.APPLICATION_JSON)
     fun getById(@PathParam("id") id: UUID): Uni<HomeworkEntity> {
         return homeworkRepository.findById(id).flatMap { it.loadLazy() }
