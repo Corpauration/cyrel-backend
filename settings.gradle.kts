@@ -12,5 +12,4 @@ pluginManagement {
 }
 rootProject.name = "cyrel-backend"
 
-include(":processor")
 include("migration")

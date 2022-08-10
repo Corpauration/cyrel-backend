@@ -7,6 +7,13 @@ plugins {
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://maven.pkg.github.com/corpauration/quarkus-annotations")
+        credentials {
+            username = project.findProperty("gpr.user") as String? ?: System.getenv("USERNAME")
+            password = project.findProperty("gpr.key") as String? ?: System.getenv("TOKEN")
+        }
+    }
     mavenLocal()
 }
 
@@ -18,8 +25,8 @@ dependencies {
     implementation("io.quarkus:quarkus-keycloak-authorization")
     implementation("io.quarkus:quarkus-oidc")
     implementation(kotlin("stdlib-jdk8"))
-    implementation(project(":processor"))
-    ksp(project(":processor"))
+    implementation("fr.corpauration:quarkus-annotations:1.0-SNAPSHOT")
+    ksp("fr.corpauration:quarkus-annotations:1.0-SNAPSHOT")
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
     implementation("io.quarkus:quarkus-kotlin")
