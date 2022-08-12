@@ -60,8 +60,10 @@ class GroupResource : BaseResource() {
         return groupRepository.findById(id).flatMap { group ->
             if (!group.private) userRepository.findBy(identity.principal.name, "email").collect().asList().flatMap {
                 if (it.size == 1) {
-                    it[0].groups = it[0].groups.plus(group)
-                    userRepository.update(it[0]).flatMap { Uni.createFrom().item(true) }
+                    if (it[0].groups.none { it.id == group.id }) {
+                        it[0].groups = it[0].groups.plus(group)
+                        userRepository.update(it[0]).flatMap { Uni.createFrom().item(true) }
+                    } else Uni.createFrom().item(false)
                 } else throw Exception("User is not registered")
             } else Uni.createFrom().item(false)
         }
