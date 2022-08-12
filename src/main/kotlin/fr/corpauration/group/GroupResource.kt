@@ -83,7 +83,7 @@ class GroupsResource : BaseResource() {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     fun get(): Multi<GroupEntity>? {
-        return groupRepository.getAll()
+        return groupRepository.findBy(false, "private")
     }
 
     @GET
@@ -97,6 +97,6 @@ class GroupsResource : BaseResource() {
     @Path("/parents")
     @Produces(MediaType.APPLICATION_JSON)
     fun getParents(): Multi<GroupEntity> {
-        return groupRepository.findBy(null, "parent");
+        return groupRepository.findBy(null, "parent").skip().where { it.private }
     }
 }
