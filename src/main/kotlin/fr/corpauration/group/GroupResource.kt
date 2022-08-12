@@ -54,7 +54,7 @@ class GroupResource : BaseResource() {
 
     @GET
     @Path("/{id}/join")
-    // Here it will need the annotation to check if user exist
+    @AccountExist
     @Produces(MediaType.APPLICATION_JSON)
     fun join(@PathParam("id") id: Int): Uni<Boolean> {
         return groupRepository.findById(id).flatMap { group ->
