@@ -20,6 +20,7 @@ repositories {
 val quarkusPlatformGroupId: String by project
 val quarkusPlatformArtifactId: String by project
 val quarkusPlatformVersion: String by project
+val ktor_version: String by project
 
 dependencies {
     implementation("io.quarkus:quarkus-keycloak-authorization")
@@ -37,6 +38,10 @@ dependencies {
     implementation("io.quarkus:quarkus-flyway")
     implementation("com.squareup:kotlinpoet:1.12.0")
     implementation("io.smallrye.reactive:mutiny-kotlin")
+    implementation("io.ktor:ktor-client-core:$ktor_version")
+    implementation("io.ktor:ktor-client-cio:$ktor_version")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
+    implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
 }
