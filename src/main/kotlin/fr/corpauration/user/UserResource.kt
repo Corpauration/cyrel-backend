@@ -82,7 +82,7 @@ class UserResource : BaseResource() {
                     email = identity.principal.name,
                     firstname = userInfo.getString("given_name"),
                     lastname = userInfo.getString("family_name"),
-                    birthday = if (json.get("birthday") != null) LocalDate.parse(
+                    birthday = if (!json.get("birthday").isNull()) LocalDate.parse(
                         json.get("birthday").asText()
                     ) else null,
                     type = userInfo.getLong("person_type").toInt()
