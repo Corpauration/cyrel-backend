@@ -1,10 +1,9 @@
 package fr.corpauration.user
 
 import com.fasterxml.jackson.databind.JsonNode
+import fr.corpauration.group.ADMIN
 import fr.corpauration.group.GroupRepository
-import fr.corpauration.utils.AccountExist
-import fr.corpauration.utils.BaseResource
-import fr.corpauration.utils.RepositoryGenerator
+import fr.corpauration.utils.*
 import io.quarkus.oidc.UserInfo
 import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
@@ -52,6 +51,7 @@ class UserResource : BaseResource() {
 
     @GET
     @AccountExist
+    @NeedToBeInGroups(ADMIN)
     @Produces(MediaType.APPLICATION_JSON)
     fun getAll(): Multi<UserEntity> {
         return userRepository.getAll()

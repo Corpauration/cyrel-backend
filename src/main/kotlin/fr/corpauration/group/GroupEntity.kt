@@ -23,3 +23,7 @@ class GroupEntity {
 
     companion object { }
 }
+
+const val ADMIN = -1
+const val HOMEWORK_RESP = -2
+const val DELEGATE = -3
