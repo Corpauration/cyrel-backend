@@ -24,6 +24,7 @@ class GroupEntity {
     companion object { }
 }
 
+// FIXME Change that with annotation at build time
 const val ADMIN = -1
 const val HOMEWORK_RESP = -2
 const val DELEGATE = -3
