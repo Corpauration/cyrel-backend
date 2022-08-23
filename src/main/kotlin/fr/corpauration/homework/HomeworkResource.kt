@@ -1,6 +1,7 @@
 package fr.corpauration.homework
 
 import com.fasterxml.jackson.databind.JsonNode
+import fr.corpauration.group.GroupEntity
 import fr.corpauration.group.GroupRepository
 import fr.corpauration.group.HOMEWORK_RESP
 import fr.corpauration.user.UserRepository
@@ -62,11 +63,11 @@ class HomeworkResource {
     @AccountExist
     @NeedToBeInGroups(HOMEWORK_RESP)
     fun createHomework(json: JsonNode): Uni<Void> {
-        if (json.hasNonNull("title") || !json.get("title").isTextual || json.hasNonNull(
+        if (!json.hasNonNull("title") || !json.get("title").isTextual || !json.hasNonNull(
                 "type"
-            ) || !json.get("type").isInt || json.hasNonNull("content") || !json.get("content").isTextual || json.hasNonNull(
+            ) || !json.get("type").isInt || !json.hasNonNull("content") || !json.get("content").isTextual || !json.hasNonNull(
                 "date"
-            ) || !json.get("date").isTextual || json.hasNonNull("group") || !json.get("group").isInt
+            ) || !json.get("date").isTextual || !json.hasNonNull("group") || !json.get("group").isInt
         ) throw HomeworkMalformed()
 
         return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
@@ -84,6 +85,30 @@ class HomeworkResource {
                     )
                 else throw UnauthorizedGroupTarget()
             }
+    }
+
+    @PUT
+    @Path("/{id}")
+    @AccountExist
+    @NeedToBeInGroups(HOMEWORK_RESP)
+    fun update(@PathParam("id") id: UUID, json: JsonNode): Uni<Void> {
+        return homeworkRepository.findById(id).flatMap { it.loadLazy() }.flatMap {
+            homework ->
+            userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
+                .transform { it[0] }
+                .flatMap {
+                    user ->
+                    if (user.groups.map { it.id }.contains(homework.group.id) && (json.hasNonNull("group") && json.get("group").isInt && user.groups.map { it.id }.contains(json.get("group").asInt()) || !json.hasNonNull("group"))) {
+                        if (json.hasNonNull("title") && json.get("title").isTextual) homework.title = json.get("title").asText()
+                        if (json.hasNonNull("content") && json.get("content").isTextual) homework.content = json.get("content").asText()
+                        if (json.hasNonNull("type") && json.get("type").isInt) homework.type = json.get("type").asInt()
+                        if (json.hasNonNull("date") && json.get("date").isTextual) homework.date = LocalDate.parse(json.get("date").asText())
+                        if (json.hasNonNull("group") && json.get("group").isInt) homework.group = GroupEntity(id = json.get("group").asInt())
+                        homeworkRepository.update(homework)
+                    }
+                    else throw UnauthorizedGroupTarget()
+                }
+        }
     }
 }
 
