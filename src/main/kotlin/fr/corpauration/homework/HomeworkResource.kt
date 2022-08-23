@@ -11,16 +11,16 @@ import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
+import org.jboss.resteasy.reactive.RestResponse
+import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 import java.time.LocalDate
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
-import javax.ws.rs.GET
-import javax.ws.rs.POST
-import javax.ws.rs.Path
-import javax.ws.rs.PathParam
-import javax.ws.rs.Produces
+import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
+
 
 @Path("/homework")
 @Authenticated
@@ -40,6 +40,16 @@ class HomeworkResource {
     @Inject
     lateinit var userRepository: UserRepository
 
+    @ServerExceptionMapper
+    fun mapException(x: HomeworkMalformed): RestResponse<String>? {
+        return RestResponse.status(Response.Status.BAD_REQUEST, "Homework is badly formatted")
+    }
+
+    @ServerExceptionMapper
+    fun mapException(x: UnauthorizedGroupTarget): RestResponse<String>? {
+        return RestResponse.status(Response.Status.FORBIDDEN, "Unauthorized group target")
+    }
+
     @GET
     @Path("/{id}")
     @AccountExist
@@ -52,12 +62,12 @@ class HomeworkResource {
     @AccountExist
     @NeedToBeInGroups(HOMEWORK_RESP)
     fun createHomework(json: JsonNode): Uni<Void> {
-        if (json.hasNonNull("title") && !json.get("title").isTextual && json.hasNonNull(
+        if (json.hasNonNull("title") || !json.get("title").isTextual || json.hasNonNull(
                 "type"
-            ) && !json.get("type").isInt && json.hasNonNull("content") && !json.get("content").isTextual && json.hasNonNull(
+            ) || !json.get("type").isInt || json.hasNonNull("content") || !json.get("content").isTextual || json.hasNonNull(
                 "date"
-            ) && !json.get("date").isTextual && json.hasNonNull("group") && !json.get("group").isInt
-        ) throw Error("Homework is badly formatted")
+            ) || !json.get("date").isTextual || json.hasNonNull("group") || !json.get("group").isInt
+        ) throw HomeworkMalformed()
 
         return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
             .transform { it[0] }
@@ -72,7 +82,7 @@ class HomeworkResource {
                             group = it.groups.filter { it.id == json.get("group").asInt() }[0]
                         )
                     )
-                else throw Error("Unauthorized group target")
+                else throw UnauthorizedGroupTarget()
             }
     }
 }
