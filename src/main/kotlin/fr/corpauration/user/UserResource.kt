@@ -11,6 +11,8 @@ import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import io.smallrye.mutiny.coroutines.awaitSuspending
 import io.vertx.mutiny.pgclient.PgPool
+import org.jboss.resteasy.reactive.RestResponse
+import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 import java.time.LocalDate
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
@@ -21,6 +23,7 @@ import javax.ws.rs.Path
 import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
 @Path("/user")
 @Authenticated
@@ -48,6 +51,16 @@ class UserResource : BaseResource() {
 
     @Inject
     lateinit var groupRepository: GroupRepository
+
+    @ServerExceptionMapper
+    fun mapException(x: UnknownPersonType): RestResponse<String>? {
+        return RestResponse.status(Response.Status.BAD_REQUEST, "Unknown person type")
+    }
+
+    @ServerExceptionMapper
+    fun mapException(x: AlreadyRegistered): RestResponse<String>? {
+        return RestResponse.status(Response.Status.BAD_REQUEST, "User is already registered")
+    }
 
     @GET
     @AccountExist
@@ -91,10 +104,10 @@ class UserResource : BaseResource() {
                     when (userInfo.getLong("person_type").toInt()) {
                         UserType.STUDENT.ordinal -> studentRepository.save(StudentEntity(id = user.id, student_id = userInfo.getLong("student_id").toInt()))
                         UserType.PROFESSOR.ordinal -> professorRepository.save(ProfessorEntity(id = user.id))
-                        else -> throw Exception("Unknown person type")
+                        else -> throw UnknownPersonType()
                     }
                 }
-            } else throw Exception("User already registered")
+            } else throw AlreadyRegistered()
         }.awaitSuspending()
     }
 }
