@@ -10,6 +10,8 @@ import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import io.vertx.mutiny.pgclient.PgPool
+import org.jboss.resteasy.reactive.RestResponse
+import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.GET
@@ -17,6 +19,7 @@ import javax.ws.rs.Path
 import javax.ws.rs.PathParam
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
 @Path("/group")
 @Authenticated
@@ -36,6 +39,11 @@ class GroupResource : BaseResource() {
 
     @Inject
     lateinit var identity: SecurityIdentity
+
+    @ServerExceptionMapper
+    fun mapException(x: UserNotRegistered): RestResponse<String>? {
+        return RestResponse.status(Response.Status.PAYMENT_REQUIRED, "User is not registered")
+    }
 
     @GET
     fun hello() = "Hello from Cyrel Api"

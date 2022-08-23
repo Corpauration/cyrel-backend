@@ -4,11 +4,14 @@ import fr.corpauration.user.UserRepository
 import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.operators.uni.UniOnItemTransformToMulti
 import io.smallrye.mutiny.operators.uni.UniOnItemTransformToUni
+import org.jboss.resteasy.reactive.RestResponse
+import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 import javax.annotation.Priority
 import javax.inject.Inject
 import javax.interceptor.AroundInvoke
 import javax.interceptor.Interceptor
 import javax.interceptor.InvocationContext
+import javax.ws.rs.core.Response
 
 @Interceptor
 @AccountExist
@@ -19,6 +22,19 @@ class AccountExistInterceptor {
 
     @Inject
     lateinit var userRepository: UserRepository
+
+    /*@ServerExceptionMapper
+    fun mapException(x: UserNotAllowed): RestResponse<String>? {
+        return RestResponse.status(Response.Status.FORBIDDEN, "User is not allowed")
+    }
+
+    @ServerExceptionMapper
+    fun mapException(x: NotReactiveFriendly): RestResponse<String>? {
+        return RestResponse.status(
+            Response.Status.INTERNAL_SERVER_ERROR,
+            "This server is missing some zest of reactive"
+        )
+    }*/
 
     @AroundInvoke
     fun intercept(context: InvocationContext): Any {
