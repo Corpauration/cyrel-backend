@@ -30,13 +30,13 @@ class AccountExistInterceptor {
         return when (proceeded::class.simpleName) {
             "UniOnItemTransformToUni" -> list.flatMap {
                 if (it.size == 1) (proceeded as UniOnItemTransformToUni<*, *>)
-                else throw Exception("User is not registered")
+                else throw UserNotRegistered()
             }
             "UniOnItemTransformToMulti" -> list.toMulti().flatMap {
                 if (it.size == 1) (proceeded as UniOnItemTransformToMulti<*, *>)
-                else throw Exception("User is not registered")
+                else throw UserNotRegistered()
             }
-            else -> throw Exception("Return type is not reactive friendly")
+            else -> throw NotReactiveFriendly()
         }
     }
 }

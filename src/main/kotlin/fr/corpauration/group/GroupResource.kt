@@ -64,7 +64,7 @@ class GroupResource : BaseResource() {
                         it[0].groups = it[0].groups.plus(group)
                         userRepository.update(it[0]).flatMap { Uni.createFrom().item(true) }
                     } else Uni.createFrom().item(false)
-                } else throw Exception("User is not registered")
+                } else throw UserNotRegistered()
             } else Uni.createFrom().item(false)
         }
     }

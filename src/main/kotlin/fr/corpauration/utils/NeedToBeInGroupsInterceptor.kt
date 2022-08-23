@@ -24,7 +24,7 @@ class NeedToBeInGroupsInterceptor {
     @AroundInvoke
     fun intercept(context: InvocationContext): Any {
         val user = userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
-            .transform { if (it.size == 0) throw Exception("User is not registered") else it[0] }
+            .transform { if (it.size == 0) throw UserNotRegistered() else it[0] }
 
         val groups = context.method.getAnnotation(NeedToBeInGroups::class.java).groups.asList()
 
@@ -34,15 +34,15 @@ class NeedToBeInGroupsInterceptor {
         return when (proceeded::class.simpleName) {
             "UniOnItemTransformToUni" -> user.flatMap {
                 if (it.groups.map { it.id }.containsAll(groups)) (proceeded as UniOnItemTransformToUni<*, *>)
-                else throw Exception("User is not allowed")
+                else throw UserNotAllowed()
             }
 
             "UniOnItemTransformToMulti" -> user.toMulti().flatMap {
                 if (it.groups.map { it.id }.containsAll(groups)) (proceeded as UniOnItemTransformToMulti<*, *>)
-                else throw Exception("User is not allowed")
+                else throw UserNotAllowed()
             }
 
-            else -> throw Exception("Return type is not reactive friendly")
+            else -> throw NotReactiveFriendly()
         }
     }
 }
