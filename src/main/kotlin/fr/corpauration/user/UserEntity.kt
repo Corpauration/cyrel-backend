@@ -4,8 +4,7 @@ import fr.corpauration.group.GroupEntity
 import fr.corpauration.utils.Entity
 import fr.corpauration.utils.ManyToMany
 import java.time.LocalDate
-import java.util.Date
-import java.util.UUID
+import java.util.*
 
 @Entity
 class UserEntity {
@@ -15,6 +14,7 @@ class UserEntity {
     var lastname: String
     var type: Int
     var birthday: LocalDate?
+
     @ManyToMany(junction_table = "users_groups")
     var groups: List<GroupEntity>
 
@@ -37,5 +37,5 @@ class UserEntity {
     }
 
 
-    companion object { }
+    companion object
 }

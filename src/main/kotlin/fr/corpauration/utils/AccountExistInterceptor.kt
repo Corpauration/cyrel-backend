@@ -2,7 +2,6 @@ package fr.corpauration.utils
 
 import fr.corpauration.user.UserRepository
 import io.quarkus.security.identity.SecurityIdentity
-import io.smallrye.mutiny.coroutines.awaitSuspending
 import io.smallrye.mutiny.operators.uni.UniOnItemTransformToMulti
 import io.smallrye.mutiny.operators.uni.UniOnItemTransformToUni
 import javax.annotation.Priority
@@ -32,10 +31,12 @@ class AccountExistInterceptor {
                 if (it.size == 1) (proceeded as UniOnItemTransformToUni<*, *>)
                 else throw UserNotRegistered()
             }
+
             "UniOnItemTransformToMulti" -> list.toMulti().flatMap {
                 if (it.size == 1) (proceeded as UniOnItemTransformToMulti<*, *>)
                 else throw UserNotRegistered()
             }
+
             else -> throw NotReactiveFriendly()
         }
     }

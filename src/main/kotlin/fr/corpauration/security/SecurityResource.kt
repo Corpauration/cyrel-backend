@@ -1,6 +1,5 @@
 package fr.corpauration.security
 
-import fr.corpauration.ExampleResource
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*

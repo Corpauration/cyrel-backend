@@ -28,15 +28,20 @@ class BaseRepository<K, V : BaseEntity>(var client: PgPool, var table: String) {
         print(table)
 
         val rowSet: Uni<RowSet<Row>> = client.query(String.format("SELECT id FROM %s", table)).execute()
-        return rowSet.onItem().transformToMulti(java.util.function.Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
-            Multi.createFrom().iterable(set)
-        }).onItem().transform(java.util.function.Function<Any, Int> { row: Any ->
+        return rowSet.onItem()
+            .transformToMulti(java.util.function.Function<RowSet<Row>, Publisher<*>> { set: RowSet<Row> ->
+                Multi.createFrom().iterable(set)
+            }).onItem().transform(java.util.function.Function<Any, Int> { row: Any ->
             (row as Row).getInteger("id") as Int
         })
     }
 
     fun findById(id: Int): Uni<V> {
-        return client.preparedQuery("SELECT * FROM test WHERE id = $1").execute(Tuple.of(id)).onItem().transform(RowSet<Row>::iterator).onItem().transform<Any?>(Function<RowIterator<Row?>, Any?> { iterator: RowIterator<Row?> -> if (iterator.hasNext()) BaseEntity.StaticFunctions.from(iterator.next() as Row) else null }) as Uni<V>
+        return client.preparedQuery("SELECT * FROM test WHERE id = $1").execute(Tuple.of(id)).onItem()
+            .transform(RowSet<Row>::iterator).onItem()
+            .transform<Any?>(Function<RowIterator<Row?>, Any?> { iterator: RowIterator<Row?> ->
+                if (iterator.hasNext()) BaseEntity.StaticFunctions.from(iterator.next() as Row) else null
+            }) as Uni<V>
     }
 
     fun findBy(id: Any, field: String): BaseEntity {

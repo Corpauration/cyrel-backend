@@ -1,7 +1,5 @@
 package fr.corpauration.user
 
-class UnknownPersonType : RuntimeException() {
-}
+class UnknownPersonType : RuntimeException()
 
-class AlreadyRegistered : RuntimeException() {
-}
+class AlreadyRegistered : RuntimeException()

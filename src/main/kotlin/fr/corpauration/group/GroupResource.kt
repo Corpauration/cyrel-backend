@@ -1,12 +1,14 @@
 package fr.corpauration.group
 
 import fr.corpauration.user.UserRepository
-import fr.corpauration.utils.*
+import fr.corpauration.utils.AccountExist
+import fr.corpauration.utils.BaseResource
+import fr.corpauration.utils.RepositoryGenerator
+import fr.corpauration.utils.UserNotRegistered
 import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
-import io.smallrye.mutiny.coroutines.awaitSuspending
 import io.vertx.mutiny.pgclient.PgPool
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject

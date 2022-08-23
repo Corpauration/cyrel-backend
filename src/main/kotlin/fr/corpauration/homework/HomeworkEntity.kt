@@ -12,10 +12,12 @@ class HomeworkEntity {
     var id: UUID
     var title: String
     var type: Int
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @fr.corpauration.utils.Lazy
     var content: String?
     var date: LocalDate
+
     @OneToOne(id = Int::class)
     var group: GroupEntity
 
@@ -35,5 +37,5 @@ class HomeworkEntity {
         this.group = group
     }
 
-    companion object { }
+    companion object
 }

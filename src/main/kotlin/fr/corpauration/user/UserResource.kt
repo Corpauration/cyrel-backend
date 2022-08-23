@@ -3,7 +3,10 @@ package fr.corpauration.user
 import com.fasterxml.jackson.databind.JsonNode
 import fr.corpauration.group.ADMIN
 import fr.corpauration.group.GroupRepository
-import fr.corpauration.utils.*
+import fr.corpauration.utils.AccountExist
+import fr.corpauration.utils.BaseResource
+import fr.corpauration.utils.NeedToBeInGroups
+import fr.corpauration.utils.RepositoryGenerator
 import io.quarkus.oidc.UserInfo
 import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
@@ -17,11 +20,7 @@ import java.time.LocalDate
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
-import javax.ws.rs.GET
-import javax.ws.rs.POST
-import javax.ws.rs.Path
-import javax.ws.rs.PathParam
-import javax.ws.rs.Produces
+import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 
@@ -95,14 +94,20 @@ class UserResource : BaseResource() {
                     email = identity.principal.name,
                     firstname = userInfo.getString("given_name"),
                     lastname = userInfo.getString("family_name"),
-                    birthday = if (!json.get("birthday").isNull()) LocalDate.parse(
+                    birthday = if (!json.get("birthday").isNull) LocalDate.parse(
                         json.get("birthday").asText()
                     ) else null,
                     type = userInfo.getLong("person_type").toInt()
                 )
                 userRepository.save(user).flatMap {
                     when (userInfo.getLong("person_type").toInt()) {
-                        UserType.STUDENT.ordinal -> studentRepository.save(StudentEntity(id = user.id, student_id = userInfo.getLong("student_id").toInt()))
+                        UserType.STUDENT.ordinal -> studentRepository.save(
+                            StudentEntity(
+                                id = user.id,
+                                student_id = userInfo.getLong("student_id").toInt()
+                            )
+                        )
+
                         UserType.PROFESSOR.ordinal -> professorRepository.save(ProfessorEntity(id = user.id))
                         else -> throw UnknownPersonType()
                     }

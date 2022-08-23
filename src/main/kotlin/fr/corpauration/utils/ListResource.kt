@@ -1,5 +1,3 @@
 package fr.corpauration.utils
 
-class ListResource<K> : BaseResource() {
-
-}
+class ListResource<K> : BaseResource()

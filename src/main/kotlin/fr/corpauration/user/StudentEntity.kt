@@ -17,5 +17,5 @@ class StudentEntity {
     }
 
 
-    companion object { }
+    companion object
 }

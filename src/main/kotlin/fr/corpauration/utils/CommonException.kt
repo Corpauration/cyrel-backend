@@ -1,10 +1,7 @@
 package fr.corpauration.utils
 
-class UserNotRegistered : RuntimeException() {
-}
+class UserNotRegistered : RuntimeException()
 
-class UserNotAllowed : RuntimeException() {
-}
+class UserNotAllowed : RuntimeException()
 
-class NotReactiveFriendly : RuntimeException() {
-}
+class NotReactiveFriendly : RuntimeException()

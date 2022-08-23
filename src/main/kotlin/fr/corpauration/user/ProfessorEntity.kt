@@ -14,5 +14,5 @@ class ProfessorEntity {
     }
 
 
-    companion object { }
+    companion object
 }

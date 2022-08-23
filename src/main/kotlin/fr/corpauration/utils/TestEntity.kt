@@ -10,5 +10,5 @@ class TestEntity {
         this.data = data
     }
 
-    companion object { }
+    companion object
 }

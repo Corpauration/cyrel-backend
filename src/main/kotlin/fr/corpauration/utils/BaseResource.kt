@@ -1,6 +1,5 @@
 package fr.corpauration.utils
 
-import fr.corpauration.homework.HomeworkMalformed
 import io.smallrye.mutiny.Uni
 import org.jboss.resteasy.reactive.RestResponse
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper
@@ -21,7 +20,10 @@ open class BaseResource {
 
     @ServerExceptionMapper
     fun mapException(x: NotReactiveFriendly): RestResponse<String>? {
-        return RestResponse.status(Response.Status.INTERNAL_SERVER_ERROR, "This server is missing some zest of reactive")
+        return RestResponse.status(
+            Response.Status.INTERNAL_SERVER_ERROR,
+            "This server is missing some zest of reactive"
+        )
     }
 
     @Path("/ping")
