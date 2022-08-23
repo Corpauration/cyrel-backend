@@ -11,7 +11,6 @@ import java.util.*
 class HomeworkEntity {
     var id: UUID
     var title: String
-    var level: Int
     var type: Int
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @fr.corpauration.utils.Lazy
@@ -24,7 +23,6 @@ class HomeworkEntity {
         id: UUID = UUID.randomUUID(),
         title: String = "",
         type: Int = -1,
-        level: Int = -1,
         content: String? = null,
         date: LocalDate = LocalDate.MIN,
         group: GroupEntity = GroupEntity()
@@ -32,7 +30,6 @@ class HomeworkEntity {
         this.id = id
         this.title = title
         this.type = type
-        this.level = level
         this.content = content
         this.date = date
         this.group = group

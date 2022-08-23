@@ -52,7 +52,7 @@ class HomeworkResource {
     @AccountExist
     @NeedToBeInGroups(HOMEWORK_RESP)
     fun createHomework(json: JsonNode): Uni<Void> {
-        if (json.hasNonNull("title") && !json.get("title").isTextual && json.hasNonNull("level") && !json.get("level").isInt && json.hasNonNull(
+        if (json.hasNonNull("title") && !json.get("title").isTextual && json.hasNonNull(
                 "type"
             ) && !json.get("type").isInt && json.hasNonNull("content") && !json.get("content").isTextual && json.hasNonNull(
                 "date"
@@ -67,7 +67,6 @@ class HomeworkResource {
                         HomeworkEntity(
                             title = json.get("title").asText(),
                             content = json.get("content").asText(),
-                            level = json.get("level").asInt(),
                             type = json.get("type").asInt(),
                             date = LocalDate.parse(json.get("date").asText()),
                             group = it.groups.filter { it.id == json.get("group").asInt() }[0]
