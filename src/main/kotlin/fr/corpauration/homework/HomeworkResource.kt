@@ -110,6 +110,25 @@ class HomeworkResource {
                 }
         }
     }
+
+    @DELETE
+    @Path("/{id}")
+    @AccountExist
+    @NeedToBeInGroups(HOMEWORK_RESP)
+    fun delete(@PathParam("id") id: UUID): Uni<Void> {
+        return homeworkRepository.findById(id).flatMap { it.loadLazy() }.flatMap {
+                homework ->
+            userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
+                .transform { it[0] }
+                .flatMap {
+                        user ->
+                    if (user.groups.map { it.id }.contains(homework.group.id)) {
+                        homeworkRepository.delete(homework)
+                    }
+                    else throw UnauthorizedGroupTarget()
+                }
+        }
+    }
 }
 
 @Path("/homeworks")
