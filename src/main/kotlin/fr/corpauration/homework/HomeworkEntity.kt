@@ -12,10 +12,7 @@ class HomeworkEntity {
     var id: UUID
     var title: String
     var type: Int
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @fr.corpauration.utils.Lazy
-    var content: String?
+    var content: String
     var date: LocalDate
 
     @OneToOne(id = Int::class)
@@ -25,7 +22,7 @@ class HomeworkEntity {
         id: UUID = UUID.randomUUID(),
         title: String = "",
         type: Int = -1,
-        content: String? = null,
+        content: String = "",
         date: LocalDate = LocalDate.MIN,
         group: GroupEntity = GroupEntity()
     ) {

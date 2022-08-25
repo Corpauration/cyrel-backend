@@ -56,7 +56,7 @@ class HomeworkResource {
     @AccountExist
     @Produces(MediaType.APPLICATION_JSON)
     fun getById(@PathParam("id") id: UUID): Uni<HomeworkEntity> {
-        return homeworkRepository.findById(id).flatMap { it.loadLazy() }
+        return homeworkRepository.findById(id)
     }
 
     @POST
@@ -92,7 +92,7 @@ class HomeworkResource {
     @AccountExist
     @NeedToBeInGroups(HOMEWORK_RESP)
     fun update(@PathParam("id") id: UUID, json: JsonNode): Uni<Void> {
-        return homeworkRepository.findById(id).flatMap { it.loadLazy() }.flatMap {
+        return homeworkRepository.findById(id).flatMap {
             homework ->
             userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
                 .transform { it[0] }
@@ -116,7 +116,7 @@ class HomeworkResource {
     @AccountExist
     @NeedToBeInGroups(HOMEWORK_RESP)
     fun delete(@PathParam("id") id: UUID): Uni<Void> {
-        return homeworkRepository.findById(id).flatMap { it.loadLazy() }.flatMap {
+        return homeworkRepository.findById(id).flatMap {
                 homework ->
             userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
                 .transform { it[0] }
