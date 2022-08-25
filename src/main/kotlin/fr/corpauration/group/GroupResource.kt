@@ -90,6 +90,12 @@ class GroupsResource : BaseResource() {
     @Inject
     lateinit var groupRepository: GroupRepository
 
+    @Inject
+    lateinit var userRepository: UserRepository
+
+    @Inject
+    lateinit var identity: SecurityIdentity
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     fun get(): Multi<GroupEntity>? {
@@ -108,5 +114,13 @@ class GroupsResource : BaseResource() {
     @Produces(MediaType.APPLICATION_JSON)
     fun getParents(): Multi<GroupEntity> {
         return groupRepository.findBy(null, "parent").skip().where { it.private }
+    }
+
+    @GET
+    @Path("/my")
+    @AccountExist
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getMyGroups(): Uni<List<GroupEntity>> {
+        return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem().transform { it[0].groups }
     }
 }
