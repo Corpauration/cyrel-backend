@@ -148,4 +148,20 @@ class HomeworksResource {
     fun getAll(): Multi<HomeworkEntity> {
         return homeworkRepository.getAll()
     }
+
+    @POST
+    @AccountExist
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getFromTo(json: JsonNode): Uni<List<HomeworkEntity>>? {
+        if (!json.hasNonNull("group") || !json.get("group").isInt || !json.hasNonNull(
+                "start"
+            ) || !json.get("start").isTextual || !json.hasNonNull("end") || !json.get("end").isTextual
+        ) throw BadRequestException()
+        val start = LocalDate.parse(json.get("start").asText())
+        val end = LocalDate.parse(json.get("end").asText())
+        return homeworkRepository.findBy(json.get("group").asInt(), "group").collect().asList().onItem() // FIXME
+            .transform {
+                it.filter { it.date >= start && it.date <= end }
+            }
+    }
 }
