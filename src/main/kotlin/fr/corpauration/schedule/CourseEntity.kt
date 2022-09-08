@@ -20,9 +20,9 @@ class CourseEntity {
     constructor(
         id: String = "",
         start: LocalDate = LocalDate.MIN,
-        end: LocalDate?,
+        end: LocalDate? = null,
         category: CourseCategory = CourseCategory.DEFAULT,
-        subject: String?,
+        subject: String? = null,
         teachers: String = "",
         rooms: String = "",
         groups: List<GroupEntity> = emptyList()
