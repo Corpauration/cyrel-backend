@@ -29,6 +29,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("fr.corpauration:quarkus-annotations:1.0.5")
     ksp("fr.corpauration:quarkus-annotations:1.0.5")
+    implementation(project(":cy-celcat"))
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
     implementation("io.quarkus:quarkus-kotlin")
