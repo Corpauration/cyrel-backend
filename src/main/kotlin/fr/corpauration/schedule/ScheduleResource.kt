@@ -13,7 +13,7 @@ import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import org.jboss.resteasy.reactive.RestResponse
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper
-import java.time.LocalDate
+import java.time.LocalDateTime
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.BadRequestException
@@ -54,8 +54,8 @@ class ScheduleResource {
                 "start"
             ) || !json.get("start").isTextual || !json.hasNonNull("end") || !json.get("end").isTextual
         ) throw BadRequestException()
-        val start = LocalDate.parse(json.get("start").asText())
-        val end = LocalDate.parse(json.get("end").asText())
+        val start = LocalDateTime.parse(json.get("start").asText())
+        val end = LocalDateTime.parse(json.get("end").asText())
 
         return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
             .transform { it[0] }
@@ -73,7 +73,11 @@ class ScheduleResource {
         where gc.ref = $1 and c.start >= $2 and c."end" <= $3
     """, entity = CourseEntity::class
     )
-    fun wrapperRetrieveScheduleForGroupBetweenDate(group: Int, start: LocalDate, end: LocalDate): Multi<CourseEntity> {
+    fun wrapperRetrieveScheduleForGroupBetweenDate(
+        group: Int,
+        start: LocalDateTime,
+        end: LocalDateTime
+    ): Multi<CourseEntity> {
         return courseRepository.wrapperRetrieveScheduleForGroupBetweenDate(group, start, end)
     }
 }
