@@ -57,7 +57,7 @@ buildscript {
 }
 
 group = "fr.corpauration"
-version = "1.0-SNAPSHOT"
+version = "3.0.0-alpha.1"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_16
