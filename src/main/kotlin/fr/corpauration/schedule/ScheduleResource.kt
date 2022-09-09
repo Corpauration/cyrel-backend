@@ -1,14 +1,19 @@
 package fr.corpauration.schedule
 
 import com.fasterxml.jackson.databind.JsonNode
-import fr.corpauration.homework.HomeworkEntity
-import fr.corpauration.homework.HomeworkRepository
+import fr.corpauration.group.GroupRepository
+import fr.corpauration.homework.UnauthorizedGroupTarget
+import fr.corpauration.user.UserRepository
 import fr.corpauration.utils.AccountExist
+import fr.corpauration.utils.CustomSql
 import fr.corpauration.utils.RepositoryGenerator
 import io.quarkus.security.Authenticated
+import io.quarkus.security.identity.SecurityIdentity
+import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
+import org.jboss.resteasy.reactive.RestResponse
+import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 import java.time.LocalDate
-import java.util.*
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.BadRequestException
@@ -16,6 +21,7 @@ import javax.ws.rs.POST
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.Response
 
 @Path("/schedule")
 @Authenticated
@@ -25,6 +31,20 @@ class ScheduleResource {
     @Inject
     @RepositoryGenerator(table = "courses", id = String::class, entity = CourseEntity::class)
     lateinit var courseRepository: CourseRepository
+
+    @Inject
+    lateinit var groupRepository: GroupRepository
+
+    @Inject
+    lateinit var identity: SecurityIdentity
+
+    @Inject
+    lateinit var userRepository: UserRepository
+
+    @ServerExceptionMapper
+    fun mapException(x: UnauthorizedGroupTarget): RestResponse<String>? {
+        return RestResponse.status(Response.Status.FORBIDDEN, "Unauthorized group target")
+    }
 
     @POST
     @AccountExist
@@ -36,9 +56,24 @@ class ScheduleResource {
         ) throw BadRequestException()
         val start = LocalDate.parse(json.get("start").asText())
         val end = LocalDate.parse(json.get("end").asText())
-        return courseRepository.findBy(json.get("group").asInt(), "group").collect().asList().onItem() // FIXME
-            .transform {
-                it.filter { it.start >= start && it.start <= end }
+
+        return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
+            .transform { it[0] }
+            .flatMap {
+                if (it.groups.map { it.id }.contains(json.get("group").asInt()))
+                    wrapperRetrieveScheduleForGroupBetweenDate(json.get("group").asInt(), start, end).collect().asList()
+                else throw UnauthorizedGroupTarget()
             }
+    }
+
+    @CustomSql(
+        """
+        select c.* from courses as c
+        join courses_groups as gc on c.id = gc.id
+        where gc.ref = $1 and c.start >= $2 and c."end" <= $3
+    """, entity = CourseEntity::class
+    )
+    fun wrapperRetrieveScheduleForGroupBetweenDate(group: Int, start: LocalDate, end: LocalDate): Multi<CourseEntity> {
+        return courseRepository.wrapperRetrieveScheduleForGroupBetweenDate(group, start, end)
     }
 }
