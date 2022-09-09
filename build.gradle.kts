@@ -23,6 +23,8 @@ val quarkusPlatformVersion: String by project
 val ktor_version: String by project
 
 dependencies {
+    implementation("io.quarkus:quarkus-quartz")
+    implementation("io.quarkus:quarkus-jdbc-postgresql")
     implementation("io.quarkus:quarkus-container-image-docker")
     implementation("io.quarkus:quarkus-keycloak-authorization")
     implementation("io.quarkus:quarkus-oidc")
