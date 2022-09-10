@@ -41,9 +41,10 @@ class UpdateCoursesTask() {
         runBlocking {
             celcat.login(System.getenv("CELCAT_USERNAME"), System.getenv("CELCAT_PASSWORD"))
             getGroupReferents().flatMap {
-                runBlocking {
+                GlobalScope.async {
                     Uni.join().all(it.map { updateCourses(celcat, it.first, it.second) }).andCollectFailures()
-                }
+                        .awaitSuspending()
+                }.asUni()
             }.awaitSuspending()
         }
         LOG.info("Done!")
