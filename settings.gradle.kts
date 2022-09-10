@@ -12,4 +12,4 @@ pluginManagement {
 }
 rootProject.name = "cyrel-backend"
 
-include("cy-celcat", "migration")
+include("cy-celcat")
