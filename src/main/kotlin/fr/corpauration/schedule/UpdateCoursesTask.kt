@@ -23,12 +23,12 @@ import javax.enterprise.context.ApplicationScoped
 
 
 @ApplicationScoped
-class UpdateCoursesTask() {
+class UpdateCoursesTask {
     var groupRepository: GroupRepository = Arc.container().instance(GroupRepository::class.java).get()
 
     var studentRepository: StudentRepository = Arc.container().instance(StudentRepository::class.java).get()
 
-    val courseRepository: CourseRepository = CourseRepository()
+    private final val courseRepository: CourseRepository = CourseRepository()
 
     lateinit var tr: SqlConnection
 
@@ -97,16 +97,16 @@ class UpdateCoursesTask() {
 
     suspend fun updateEvent(celcat: CyCelcat, course: Course): Uni<Void> {
         val event = celcat.getSideBarEvent(course.id)
-        var id: String = course.id
-        var start: LocalDateTime = LocalDateTime.parse(course.start)
-        var end: LocalDateTime? = if (course.end == null) null else LocalDateTime.parse(course.end)
+        val id: String = course.id
+        val start: LocalDateTime = LocalDateTime.parse(course.start)
+        val end: LocalDateTime? = if (course.end == null) null else LocalDateTime.parse(course.end)
         var category: CourseCategory = CourseCategory.DEFAULT
         var subject: String? = null
-        var teachers: String = ""
-        var rooms: String = ""
+        var teachers = ""
+        var rooms = ""
 //        var groups: List<GroupEntity>
 
-        var svElem: SideBarEventElement = SideBarEventElement(
+        var svElem = SideBarEventElement(
             "",
             entityType = 0,
             containsHyperlinks = false,

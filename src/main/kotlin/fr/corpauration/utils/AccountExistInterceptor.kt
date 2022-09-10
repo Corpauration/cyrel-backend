@@ -4,14 +4,11 @@ import fr.corpauration.user.UserRepository
 import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.operators.uni.UniOnItemTransformToMulti
 import io.smallrye.mutiny.operators.uni.UniOnItemTransformToUni
-import org.jboss.resteasy.reactive.RestResponse
-import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 import javax.annotation.Priority
 import javax.inject.Inject
 import javax.interceptor.AroundInvoke
 import javax.interceptor.Interceptor
 import javax.interceptor.InvocationContext
-import javax.ws.rs.core.Response
 
 @Interceptor
 @AccountExist

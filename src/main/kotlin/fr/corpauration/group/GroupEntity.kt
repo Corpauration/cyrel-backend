@@ -5,28 +5,13 @@ import fr.corpauration.utils.OneToOne
 import java.util.*
 
 @Entity
-class GroupEntity {
-    var id: Int
-    var name: String
-    var referent: UUID?
-
-    @OneToOne(id = Int::class)
-    var parent: GroupEntity?
-    var private: Boolean
-
-    constructor(
-        id: Int = -1,
-        name: String = "",
-        referent: UUID? = null,
-        parent: GroupEntity? = null,
-        private: Boolean = false
-    ) {
-        this.id = id
-        this.name = name
-        this.referent = referent
-        this.parent = parent
-        this.private = private
-    }
+class GroupEntity(
+    var id: Int = -1,
+    var name: String = "",
+    var referent: UUID? = null,
+    @OneToOne(id = Int::class) var parent: GroupEntity? = null,
+    var private: Boolean = false
+) {
 
     companion object
 }

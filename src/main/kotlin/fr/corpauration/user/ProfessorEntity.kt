@@ -4,14 +4,7 @@ import fr.corpauration.utils.Entity
 import java.util.*
 
 @Entity
-class ProfessorEntity {
-    var id: UUID
-
-    constructor(
-        id: UUID = UUID.randomUUID()
-    ) {
-        this.id = id
-    }
+class ProfessorEntity(var id: UUID = UUID.randomUUID()) {
 
 
     companion object

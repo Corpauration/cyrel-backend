@@ -1,6 +1,5 @@
 package fr.corpauration.homework
 
-import com.fasterxml.jackson.annotation.JsonInclude
 import fr.corpauration.group.GroupEntity
 import fr.corpauration.utils.Entity
 import fr.corpauration.utils.OneToOne
@@ -8,31 +7,14 @@ import java.time.LocalDate
 import java.util.*
 
 @Entity
-class HomeworkEntity {
-    var id: UUID
-    var title: String
-    var type: Int
-    var content: String
-    var date: LocalDate
-
-    @OneToOne(id = Int::class)
-    var group: GroupEntity
-
-    constructor(
-        id: UUID = UUID.randomUUID(),
-        title: String = "",
-        type: Int = -1,
-        content: String = "",
-        date: LocalDate = LocalDate.MIN,
-        group: GroupEntity = GroupEntity()
-    ) {
-        this.id = id
-        this.title = title
-        this.type = type
-        this.content = content
-        this.date = date
-        this.group = group
-    }
+class HomeworkEntity(
+    var id: UUID = UUID.randomUUID(),
+    var title: String = "",
+    var type: Int = -1,
+    var content: String = "",
+    var date: LocalDate = LocalDate.MIN,
+    @OneToOne(id = Int::class) var group: GroupEntity = GroupEntity()
+) {
 
     companion object
 }
