@@ -4,8 +4,8 @@ import fr.corpauration.cycelcat.CyCelcat
 import fr.corpauration.cycelcat.resources.Course
 import fr.corpauration.cycelcat.resources.SideBarEventElement
 import fr.corpauration.cycelcat.resources.Student
-import fr.corpauration.group.GroupRepository
-import fr.corpauration.user.StudentRepository
+import fr.corpauration.group.GroupRepository2
+import fr.corpauration.user.StudentRepository2
 import fr.corpauration.utils.CustomSql
 import io.quarkus.arc.Arc
 import io.smallrye.mutiny.Uni
@@ -24,11 +24,11 @@ import javax.enterprise.context.ApplicationScoped
 
 @ApplicationScoped
 class UpdateCoursesTask {
-    var groupRepository: GroupRepository = Arc.container().instance(GroupRepository::class.java).get()
+    var groupRepository: GroupRepository2 = Arc.container().instance(GroupRepository2::class.java).get()
 
-    var studentRepository: StudentRepository = Arc.container().instance(StudentRepository::class.java).get()
+    var studentRepository: StudentRepository2 = Arc.container().instance(StudentRepository2::class.java).get()
 
-    private final val courseRepository: CourseRepository = CourseRepository()
+    private final val courseRepository: CourseRepository2 = CourseRepository2()
 
     lateinit var tr: SqlConnection
 

@@ -34,15 +34,25 @@ class UserResource : BaseResource() {
     lateinit var client: PgPool
 
     @Inject
-    @RepositoryGenerator(table = "users", id = UUID::class, entity = UserEntity::class)
+    @RepositoryGenerator(table = "users", id = UUID::class, entity = UserEntity::class, additionalDataSource = "")
     lateinit var userRepository: UserRepository
 
     @Inject
-    @RepositoryGenerator(table = "students", id = UUID::class, entity = StudentEntity::class)
+    @RepositoryGenerator(
+        table = "students",
+        id = UUID::class,
+        entity = StudentEntity::class,
+        additionalDataSource = "quartz"
+    )
     lateinit var studentRepository: StudentRepository
 
     @Inject
-    @RepositoryGenerator(table = "professors", id = UUID::class, entity = ProfessorEntity::class)
+    @RepositoryGenerator(
+        table = "professors",
+        id = UUID::class,
+        entity = ProfessorEntity::class,
+        additionalDataSource = ""
+    )
     lateinit var professorRepository: ProfessorRepository
 
     @Inject

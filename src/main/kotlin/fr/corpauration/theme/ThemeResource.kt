@@ -18,7 +18,7 @@ import javax.ws.rs.core.MediaType
 @ApplicationScoped
 class ThemeResource {
     @Inject
-    @RepositoryGenerator(table = "themes", id = Int::class, entity = ThemeEntity::class)
+    @RepositoryGenerator(table = "themes", id = Int::class, entity = ThemeEntity::class, additionalDataSource = "")
     lateinit var themeRepository: ThemeRepository
 
     @GET

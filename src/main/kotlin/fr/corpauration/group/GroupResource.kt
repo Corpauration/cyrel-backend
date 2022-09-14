@@ -31,7 +31,12 @@ class GroupResource : BaseResource() {
     lateinit var client: PgPool
 
     @Inject
-    @RepositoryGenerator(table = "groups", id = Int::class, entity = GroupEntity::class)
+    @RepositoryGenerator(
+        table = "groups",
+        id = Int::class,
+        entity = GroupEntity::class,
+        additionalDataSource = "quartz"
+    )
     lateinit var groupRepository: GroupRepository
 
     @Inject

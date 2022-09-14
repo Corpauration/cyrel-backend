@@ -29,7 +29,12 @@ import javax.ws.rs.core.Response
 @ApplicationScoped
 class ScheduleResource {
     @Inject
-    @RepositoryGenerator(table = "courses", id = String::class, entity = CourseEntity::class)
+    @RepositoryGenerator(
+        table = "courses",
+        id = String::class,
+        entity = CourseEntity::class,
+        additionalDataSource = "quartz"
+    )
     lateinit var courseRepository: CourseRepository
 
     @Inject

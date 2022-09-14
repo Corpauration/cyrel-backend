@@ -29,7 +29,12 @@ import javax.ws.rs.core.Response
 @ApplicationScoped
 class HomeworkResource {
     @Inject
-    @RepositoryGenerator(table = "homeworks", id = UUID::class, entity = HomeworkEntity::class)
+    @RepositoryGenerator(
+        table = "homeworks",
+        id = UUID::class,
+        entity = HomeworkEntity::class,
+        additionalDataSource = ""
+    )
     lateinit var homeworkRepository: HomeworkRepository
 
     @Inject

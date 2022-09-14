@@ -23,7 +23,12 @@ import javax.ws.rs.core.MediaType
 @ApplicationScoped
 class PreferenceResource {
     @Inject
-    @RepositoryGenerator(table = "preferences", id = UUID::class, entity = PreferenceEntity::class)
+    @RepositoryGenerator(
+        table = "preferences",
+        id = UUID::class,
+        entity = PreferenceEntity::class,
+        additionalDataSource = ""
+    )
     lateinit var preferenceRepository: PreferenceRepository
 
     @Inject

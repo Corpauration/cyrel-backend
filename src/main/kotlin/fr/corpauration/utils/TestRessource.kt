@@ -15,7 +15,7 @@ class TestRessource {
     lateinit var client: PgPool
 
     @Inject
-    @RepositoryGenerator(table = "test", id = Int::class, entity = TestEntity::class)
+    @RepositoryGenerator(table = "test", id = Int::class, entity = TestEntity::class, additionalDataSource = "")
     lateinit var testRepository: TestRepository
 
     @GET
