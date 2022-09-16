@@ -33,7 +33,7 @@ class ScheduleResource {
         table = "courses",
         id = String::class,
         entity = CourseEntity::class,
-        additionalDataSource = "quartz"
+        additionalDataSource = ""
     )
     lateinit var courseRepository: CourseRepository
 

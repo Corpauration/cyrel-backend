@@ -35,7 +35,7 @@ class GroupResource : BaseResource() {
         table = "groups",
         id = Int::class,
         entity = GroupEntity::class,
-        additionalDataSource = "quartz"
+        additionalDataSource = ""
     )
     lateinit var groupRepository: GroupRepository
 

@@ -42,7 +42,7 @@ class UserResource : BaseResource() {
         table = "students",
         id = UUID::class,
         entity = StudentEntity::class,
-        additionalDataSource = "quartz"
+        additionalDataSource = ""
     )
     lateinit var studentRepository: StudentRepository
 
