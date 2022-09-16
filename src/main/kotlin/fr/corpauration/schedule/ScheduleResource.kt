@@ -32,8 +32,7 @@ class ScheduleResource {
     @RepositoryGenerator(
         table = "courses",
         id = String::class,
-        entity = CourseEntity::class,
-        additionalDataSource = ""
+        entity = CourseEntity::class
     )
     lateinit var courseRepository: CourseRepository
 

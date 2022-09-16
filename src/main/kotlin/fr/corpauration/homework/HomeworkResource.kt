@@ -32,8 +32,7 @@ class HomeworkResource {
     @RepositoryGenerator(
         table = "homeworks",
         id = UUID::class,
-        entity = HomeworkEntity::class,
-        additionalDataSource = ""
+        entity = HomeworkEntity::class
     )
     lateinit var homeworkRepository: HomeworkRepository
 

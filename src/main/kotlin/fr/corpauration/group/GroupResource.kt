@@ -34,8 +34,7 @@ class GroupResource : BaseResource() {
     @RepositoryGenerator(
         table = "groups",
         id = Int::class,
-        entity = GroupEntity::class,
-        additionalDataSource = ""
+        entity = GroupEntity::class
     )
     lateinit var groupRepository: GroupRepository
 

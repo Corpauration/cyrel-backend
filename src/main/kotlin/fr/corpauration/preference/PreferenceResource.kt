@@ -26,8 +26,7 @@ class PreferenceResource {
     @RepositoryGenerator(
         table = "preferences",
         id = UUID::class,
-        entity = PreferenceEntity::class,
-        additionalDataSource = ""
+        entity = PreferenceEntity::class
     )
     lateinit var preferenceRepository: PreferenceRepository
 
