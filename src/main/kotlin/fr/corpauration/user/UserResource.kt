@@ -95,6 +95,9 @@ class UserResource : BaseResource() {
 
     @POST
     suspend fun register(json: JsonNode): Any? {
+        if (!json.hasNonNull("person_type") || !json.get("person_type").isInt || json.get("person_type")
+                .asInt() != UserType.STUDENT.ordinal || !json.hasNonNull("student_id") || !json.get("student_id").isInt
+        ) throw BadRequestException("Malformed request")
         return userRepository.findBy(identity.principal.name, "email").collect().asList().flatMap {
             if (it.size == 0) {
                 val userInfo = (identity.attributes["userinfo"]!! as UserInfo)
@@ -105,14 +108,14 @@ class UserResource : BaseResource() {
                     birthday = if (!json.get("birthday").isNull) LocalDate.parse(
                         json.get("birthday").asText()
                     ) else null,
-                    type = userInfo.getLong("person_type").toInt()
+                    type = json.get("person_type").asInt()
                 )
                 userRepository.save(user).flatMap {
-                    when (userInfo.getLong("person_type").toInt()) {
+                    when (json.get("person_type").asInt()) {
                         UserType.STUDENT.ordinal -> studentRepository.save(
                             StudentEntity(
                                 id = user.id,
-                                student_id = userInfo.getLong("student_id").toInt()
+                                student_id = json.get("student_id").asInt()
                             )
                         )
 
