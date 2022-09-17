@@ -3,6 +3,7 @@ package fr.corpauration.user
 import com.fasterxml.jackson.databind.JsonNode
 import fr.corpauration.group.ADMIN
 import fr.corpauration.group.GroupRepository
+import fr.corpauration.security.WrongEmailDomain
 import fr.corpauration.utils.AccountExist
 import fr.corpauration.utils.BaseResource
 import fr.corpauration.utils.NeedToBeInGroups
@@ -82,6 +83,11 @@ class UserResource : BaseResource() {
         return RestResponse.status(Response.Status.FORBIDDEN, "Student id not authorized")
     }
 
+    @ServerExceptionMapper
+    fun mapException(x: WrongEmailDomain): RestResponse<String>? {
+        return RestResponse.status(Response.Status.UNAUTHORIZED, "Wrong email domain")
+    }
+
     @GET
     @AccountExist
     @NeedToBeInGroups(ADMIN)
@@ -108,6 +114,7 @@ class UserResource : BaseResource() {
 
     @POST
     suspend fun register(json: JsonNode) {
+        if (!identity.principal.name.endsWith("@cy-tech.fr")) throw WrongEmailDomain()
         if (!json.hasNonNull("person_type") || !json.get("person_type").isInt || json.get("person_type")
                 .asInt() != UserType.STUDENT.ordinal || !json.hasNonNull("student_id") || !json.get("student_id").isInt
         ) throw BadRequestException("Malformed request")
