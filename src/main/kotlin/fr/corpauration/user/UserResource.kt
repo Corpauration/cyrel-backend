@@ -54,6 +54,14 @@ class UserResource : BaseResource() {
     lateinit var professorRepository: ProfessorRepository
 
     @Inject
+    @RepositoryGenerator(
+        table = "cytech_students",
+        id = Int::class,
+        entity = CytechStudent::class
+    )
+    lateinit var cytechStudentRepository: CytechStudentRepository
+
+    @Inject
     lateinit var identity: SecurityIdentity
 
     @Inject
@@ -67,6 +75,11 @@ class UserResource : BaseResource() {
     @ServerExceptionMapper
     fun mapException(x: AlreadyRegistered): RestResponse<String>? {
         return RestResponse.status(Response.Status.BAD_REQUEST, "User is already registered")
+    }
+
+    @ServerExceptionMapper
+    fun mapException(x: UnknownStudentId): RestResponse<String>? {
+        return RestResponse.status(Response.Status.FORBIDDEN, "Student id not authorized")
     }
 
     @GET
@@ -94,7 +107,7 @@ class UserResource : BaseResource() {
     }
 
     @POST
-    suspend fun register(json: JsonNode): Any? {
+    suspend fun register(json: JsonNode): Void {
         if (!json.hasNonNull("person_type") || !json.get("person_type").isInt || json.get("person_type")
                 .asInt() != UserType.STUDENT.ordinal || !json.hasNonNull("student_id") || !json.get("student_id").isInt
         ) throw BadRequestException("Malformed request")
@@ -105,22 +118,30 @@ class UserResource : BaseResource() {
                     email = identity.principal.name,
                     firstname = userInfo.getString("given_name"),
                     lastname = userInfo.getString("family_name"),
-                    birthday = if (!json.get("birthday").isNull) LocalDate.parse(
+                    birthday = if (json.get("birthday") != null && !json.get("birthday").isNull) LocalDate.parse(
                         json.get("birthday").asText()
                     ) else null,
                     type = json.get("person_type").asInt()
                 )
-                userRepository.save(user).flatMap {
-                    when (json.get("person_type").asInt()) {
-                        UserType.STUDENT.ordinal -> studentRepository.save(
-                            StudentEntity(
-                                id = user.id,
-                                student_id = json.get("student_id").asInt()
-                            )
-                        )
+                when (json.get("person_type").asInt()) {
+                    UserType.STUDENT.ordinal -> cytechStudentRepository.findById(json.get("student_id").asInt())
+                        .onFailure().transform { UnknownStudentId() }
 
-                        UserType.PROFESSOR.ordinal -> professorRepository.save(ProfessorEntity(id = user.id))
-                        else -> throw UnknownPersonType()
+                    UserType.PROFESSOR.ordinal -> Uni.createFrom().voidItem()
+                    else -> Uni.createFrom().failure<Void?>(UnknownPersonType()).replaceWithVoid()
+                }.flatMap {
+                    userRepository.save(user).flatMap {
+                        when (json.get("person_type").asInt()) {
+                            UserType.STUDENT.ordinal -> studentRepository.save(
+                                StudentEntity(
+                                    id = user.id,
+                                    student_id = json.get("student_id").asInt()
+                                )
+                            )
+
+                            UserType.PROFESSOR.ordinal -> professorRepository.save(ProfessorEntity(id = user.id))
+                            else -> throw UnknownPersonType()
+                        }
                     }
                 }
             } else throw AlreadyRegistered()
