@@ -21,19 +21,6 @@ class NeedToBeInGroupsInterceptor {
     @Inject
     lateinit var userRepository: UserRepository
 
-    /*@ServerExceptionMapper
-    fun mapException(x: UserNotAllowed): RestResponse<String>? {
-        return RestResponse.status(Response.Status.FORBIDDEN, "User is not allowed")
-    }
-
-    @ServerExceptionMapper
-    fun mapException(x: NotReactiveFriendly): RestResponse<String>? {
-        return RestResponse.status(
-            Response.Status.INTERNAL_SERVER_ERROR,
-            "This server is missing some zest of reactive"
-        )
-    }*/
-
     @AroundInvoke
     fun intercept(context: InvocationContext): Any {
         val user = userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()

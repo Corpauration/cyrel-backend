@@ -11,8 +11,6 @@ import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
-import org.jboss.resteasy.reactive.RestResponse
-import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 import java.time.LocalDateTime
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
@@ -21,7 +19,6 @@ import javax.ws.rs.POST
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
-import javax.ws.rs.core.Response
 
 @Path("/schedule")
 @Authenticated
@@ -44,11 +41,6 @@ class ScheduleResource {
 
     @Inject
     lateinit var userRepository: UserRepository
-
-    @ServerExceptionMapper
-    fun mapException(x: UnauthorizedGroupTarget): RestResponse<String>? {
-        return RestResponse.status(Response.Status.FORBIDDEN, "Unauthorized group target")
-    }
 
     @POST
     @AccountExist

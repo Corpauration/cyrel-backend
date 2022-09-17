@@ -9,15 +9,12 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
 import org.jboss.logging.Logger
-import org.jboss.resteasy.reactive.RestResponse
-import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 import javax.enterprise.context.ApplicationScoped
 import javax.ws.rs.POST
 import javax.ws.rs.PUT
 import javax.ws.rs.Path
 import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
-import javax.ws.rs.core.Response
 
 
 @Path("/security")
@@ -31,11 +28,6 @@ class SecurityResource {
     }
 
     private val LOG: Logger = Logger.getLogger(SecurityResource::class.java)
-
-    @ServerExceptionMapper
-    fun mapException(x: WrongEmailDomain): RestResponse<String>? {
-        return RestResponse.status(Response.Status.UNAUTHORIZED, "Wrong email domain")
-    }
 
     @POST
     suspend fun getToken(credentials: Credentials): TokenResponse {

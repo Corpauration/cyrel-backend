@@ -12,15 +12,12 @@ import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
-import org.jboss.resteasy.reactive.RestResponse
-import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 import java.time.LocalDate
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
-import javax.ws.rs.core.Response
 
 
 @Path("/homework")
@@ -44,16 +41,6 @@ class HomeworkResource {
 
     @Inject
     lateinit var userRepository: UserRepository
-
-    @ServerExceptionMapper
-    fun mapException(x: HomeworkMalformed): RestResponse<String>? {
-        return RestResponse.status(Response.Status.BAD_REQUEST, "Homework is badly formatted")
-    }
-
-    @ServerExceptionMapper
-    fun mapException(x: UnauthorizedGroupTarget): RestResponse<String>? {
-        return RestResponse.status(Response.Status.FORBIDDEN, "Unauthorized group target")
-    }
 
     @GET
     @Path("/{id}")

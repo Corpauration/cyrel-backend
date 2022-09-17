@@ -15,15 +15,12 @@ import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import io.smallrye.mutiny.coroutines.awaitSuspending
 import io.vertx.mutiny.pgclient.PgPool
-import org.jboss.resteasy.reactive.RestResponse
-import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 import java.time.LocalDate
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
-import javax.ws.rs.core.Response
 
 @Path("/user")
 @Authenticated
@@ -67,26 +64,6 @@ class UserResource : BaseResource() {
 
     @Inject
     lateinit var groupRepository: GroupRepository
-
-    @ServerExceptionMapper
-    fun mapException(x: UnknownPersonType): RestResponse<String>? {
-        return RestResponse.status(Response.Status.BAD_REQUEST, "Unknown person type")
-    }
-
-    @ServerExceptionMapper
-    fun mapException(x: AlreadyRegistered): RestResponse<String>? {
-        return RestResponse.status(Response.Status.BAD_REQUEST, "User is already registered")
-    }
-
-    @ServerExceptionMapper
-    fun mapException(x: UnknownStudentId): RestResponse<String>? {
-        return RestResponse.status(Response.Status.FORBIDDEN, "Student id not authorized")
-    }
-
-    @ServerExceptionMapper
-    fun mapException(x: WrongEmailDomain): RestResponse<String>? {
-        return RestResponse.status(Response.Status.UNAUTHORIZED, "Wrong email domain")
-    }
 
     @GET
     @AccountExist
