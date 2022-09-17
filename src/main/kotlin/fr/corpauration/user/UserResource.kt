@@ -107,11 +107,11 @@ class UserResource : BaseResource() {
     }
 
     @POST
-    suspend fun register(json: JsonNode): Void {
+    suspend fun register(json: JsonNode) {
         if (!json.hasNonNull("person_type") || !json.get("person_type").isInt || json.get("person_type")
                 .asInt() != UserType.STUDENT.ordinal || !json.hasNonNull("student_id") || !json.get("student_id").isInt
         ) throw BadRequestException("Malformed request")
-        return userRepository.findBy(identity.principal.name, "email").collect().asList().flatMap {
+        userRepository.findBy(identity.principal.name, "email").collect().asList().flatMap {
             if (it.size == 0) {
                 val userInfo = (identity.attributes["userinfo"]!! as UserInfo)
                 val user = UserEntity(
@@ -145,6 +145,6 @@ class UserResource : BaseResource() {
                     }
                 }
             } else throw AlreadyRegistered()
-        }.awaitSuspending()
+        }.onItem().transform { "not null" }.awaitSuspending()
     }
 }
