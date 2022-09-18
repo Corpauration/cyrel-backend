@@ -64,7 +64,11 @@ class PreferenceResource {
             .flatMap {
                 pref.id = it.id
                 preferenceRepository.save(pref).onFailure().recoverWithUni { _ ->
-                    preferenceRepository.update(pref)
+                    if (pref.theme == null) pref.theme = ThemeEntity(id = 0)
+                    themeRepository.findById(pref.theme!!.id).flatMap {
+                        pref.theme = it
+                        preferenceRepository.update(pref)
+                    }
                 }
             }
     }
