@@ -75,6 +75,7 @@ class UserResource : BaseResource() {
 
     @GET
     @AccountExist
+    @NeedToBeInGroups(ADMIN)
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     fun getById(@PathParam("id") id: UUID): Uni<UserEntity> {
