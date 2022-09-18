@@ -2,6 +2,7 @@ package fr.corpauration.preference
 
 import fr.corpauration.group.GroupRepository
 import fr.corpauration.theme.ThemeEntity
+import fr.corpauration.theme.ThemeRepository
 import fr.corpauration.user.UserRepository
 import fr.corpauration.utils.AccountExist
 import fr.corpauration.utils.RepositoryGenerator
@@ -29,6 +30,9 @@ class PreferenceResource {
         entity = PreferenceEntity::class
     )
     lateinit var preferenceRepository: PreferenceRepository
+
+    @Inject
+    lateinit var themeRepository: ThemeRepository
 
     @Inject
     lateinit var groupRepository: GroupRepository
