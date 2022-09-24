@@ -1,5 +1,5 @@
 package fr.corpauration.schedule
 
 enum class CourseCategory {
-    DEFAULT, CM
+    DEFAULT, CM, TD, ACCUEIL, EXAMENS, INDISPONIBILITE, REUNIONS, MANIFESTATION, PROJET_ENCADRE_TUTORE
 }
