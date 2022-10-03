@@ -8,8 +8,11 @@ import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
+import io.micrometer.core.instrument.MeterRegistry
 import org.jboss.logging.Logger
+import java.time.LocalDateTime
 import javax.enterprise.context.ApplicationScoped
+import javax.inject.Inject
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 
@@ -26,6 +29,12 @@ class SecurityResource {
 
     private val LOG: Logger = Logger.getLogger(SecurityResource::class.java)
 
+    @Inject
+    lateinit var registry: MeterRegistry
+
+    @Inject
+    lateinit var metrics: SecurityMetrics
+
     @POST
     suspend fun getToken(credentials: Credentials): TokenResponse {
         if (!credentials.username.endsWith("@cy-tech.fr")) throw WrongEmailDomain()
@@ -41,6 +50,16 @@ class SecurityResource {
             }
         )
         if (!response.status.isSuccess()) LOG.error(response.request.url)
+        else {
+            registry.gauge("cyrel_backend_online", metrics) {
+                if (it.time.isBefore(LocalDateTime.now().minusHours(6))) {
+                    it.time = LocalDateTime.now()
+                    it.count = 0
+                }
+                it.count++
+                it.count.toDouble()
+            }
+        }
         return response.body()
     }
 
@@ -70,5 +89,15 @@ class SecurityResource {
             }
         )
         if (!response.status.isSuccess()) LOG.error(response.request.url)
+        else {
+            registry.gauge("cyrel_backend_online", metrics) {
+                if (it.time.isBefore(LocalDateTime.now().minusHours(6))) {
+                    it.time = LocalDateTime.now()
+                    it.count = 0
+                }
+                it.count--
+                it.count.toDouble()
+            }
+        }
     }
 }
