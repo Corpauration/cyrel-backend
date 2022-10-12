@@ -51,14 +51,11 @@ class SecurityResource {
         )
         if (!response.status.isSuccess()) LOG.error(response.request.url)
         else {
-            registry.gauge("cyrel_backend_online", metrics) {
-                if (it.time.isBefore(LocalDateTime.now().minusHours(6))) {
-                    it.time = LocalDateTime.now()
-                    it.count = 0
-                }
-                it.count++
-                it.count.toDouble()
+            if (metrics.time.isBefore(LocalDateTime.now().minusHours(6))) {
+                metrics.time = LocalDateTime.now()
+                registry.remove(registry.counter("cyrel_backend_logged_in"))
             }
+            registry.counter("cyrel_backend_logged_in").increment()
         }
         return response.body()
     }
@@ -89,15 +86,5 @@ class SecurityResource {
             }
         )
         if (!response.status.isSuccess()) LOG.error(response.request.url)
-        else {
-            registry.gauge("cyrel_backend_online", metrics) {
-                if (it.time.isBefore(LocalDateTime.now().minusHours(6))) {
-                    it.time = LocalDateTime.now()
-                    it.count = 0
-                }
-                it.count--
-                it.count.toDouble()
-            }
-        }
     }
 }
