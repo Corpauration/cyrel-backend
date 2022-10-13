@@ -8,6 +8,7 @@ import fr.corpauration.utils.AccountExist
 import fr.corpauration.utils.BaseResource
 import fr.corpauration.utils.NeedToBeInGroups
 import fr.corpauration.utils.RepositoryGenerator
+import io.micrometer.core.instrument.MeterRegistry
 import io.quarkus.oidc.UserInfo
 import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
@@ -37,25 +38,19 @@ class UserResource : BaseResource() {
 
     @Inject
     @RepositoryGenerator(
-        table = "students",
-        id = UUID::class,
-        entity = StudentEntity::class
+        table = "students", id = UUID::class, entity = StudentEntity::class
     )
     lateinit var studentRepository: StudentRepository
 
     @Inject
     @RepositoryGenerator(
-        table = "professors",
-        id = UUID::class,
-        entity = ProfessorEntity::class
+        table = "professors", id = UUID::class, entity = ProfessorEntity::class
     )
     lateinit var professorRepository: ProfessorRepository
 
     @Inject
     @RepositoryGenerator(
-        table = "cytech_students",
-        id = Int::class,
-        entity = CytechStudent::class
+        table = "cytech_students", id = Int::class, entity = CytechStudent::class
     )
     lateinit var cytechStudentRepository: CytechStudentRepository
 
@@ -64,6 +59,9 @@ class UserResource : BaseResource() {
 
     @Inject
     lateinit var groupRepository: GroupRepository
+
+    @Inject
+    lateinit var registry: MeterRegistry
 
     @GET
     @AccountExist
@@ -119,12 +117,13 @@ class UserResource : BaseResource() {
                         when (json.get("person_type").asInt()) {
                             UserType.STUDENT.ordinal -> studentRepository.save(
                                 StudentEntity(
-                                    id = user.id,
-                                    student_id = json.get("student_id").asInt()
+                                    id = user.id, student_id = json.get("student_id").asInt()
                                 )
-                            )
+                            ).onItem().transform { registry.counter("cyrel_backend_registered_users").increment() }
 
                             UserType.PROFESSOR.ordinal -> professorRepository.save(ProfessorEntity(id = user.id))
+                                .onItem().transform { registry.counter("cyrel_backend_registered_users").increment() }
+
                             else -> throw UnknownPersonType()
                         }
                     }
