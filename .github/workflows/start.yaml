@@ -1,8 +1,7 @@
 name: Start cyrel-backend
 on:
-  workflow_dispatch:
-#  schedule:
-#    - cron: '0 7 * * *'
+  schedule:
+    - cron: '0 7 * * *'
 jobs:
   start:
     runs-on: ubuntu-latest

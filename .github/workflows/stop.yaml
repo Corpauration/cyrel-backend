@@ -1,8 +1,7 @@
 name: Stop cyrel-backend
 on:
-  workflow_dispatch:
-#  schedule:
-#    - cron: '0 17 * * *'
+  schedule:
+    - cron: '0 17 * * *'
 jobs:
   stop:
     runs-on: ubuntu-latest
