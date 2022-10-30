@@ -1,0 +1,21 @@
+name: Start cyrel-backend
+on:
+  workflow_dispatch:
+#  schedule:
+#    - cron: '0 7 * * *'
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - run: npm install -g clever-tools
+        name: Install clever-tools
+      - run: clever login --token {{ secrets.CLEVER_TOKEN }} --secret {{ secrets.CLEVER_SECRET }}
+        name: Login
+      - run: clever link {{ secrets.CLEVER_APP_ID }}
+        name: Link cyrel-backend app
+      - run: clever restart
+        name: Start cyrel-backend
+        timeout-minutes: 30
