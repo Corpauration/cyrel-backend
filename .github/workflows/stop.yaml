@@ -4,7 +4,7 @@ on:
 #  schedule:
 #    - cron: '0 17 * * *'
 jobs:
-  start:
+  stop:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@v3
@@ -12,9 +12,14 @@ jobs:
           node-version: '16'
       - run: npm install -g clever-tools
         name: Install clever-tools
-      - run: clever login --token {{ secrets.CLEVER_TOKEN }} --secret {{ secrets.CLEVER_SECRET }}
+      - run: clever login --token $CLEVER_TOKEN --secret $CLEVER_SECRET
+        env:
+          CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
+          CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
         name: Login
-      - run: clever link {{ secrets.CLEVER_APP_ID }}
+      - run: clever link $CLEVER_APP_ID
+        env:
+          CLEVER_APP_ID: ${{ secrets.CLEVER_APP_ID }}
         name: Link cyrel-backend app
       - run: clever stop
         name: Stop cyrel-backend
