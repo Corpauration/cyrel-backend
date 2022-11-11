@@ -81,6 +81,16 @@ class UserResource : BaseResource() {
     }
 
     @GET
+    @AccountExist
+    @Path("/me")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getMe(): Uni<UserEntity> {
+        return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem().transform {
+            it.first()
+        }
+    }
+
+    @GET
     @Path("/isRegistered")
     fun isRegistered(): Uni<Boolean> {
         return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem().transform {
