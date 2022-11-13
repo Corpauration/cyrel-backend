@@ -1,13 +1,12 @@
 package fr.corpauration.homework
 
 import com.fasterxml.jackson.databind.JsonNode
+import fr.corpauration.group.ADMIN
 import fr.corpauration.group.GroupEntity
 import fr.corpauration.group.GroupRepository
 import fr.corpauration.group.HOMEWORK_RESP
 import fr.corpauration.user.UserRepository
-import fr.corpauration.utils.AccountExist
-import fr.corpauration.utils.NeedToBeInGroups
-import fr.corpauration.utils.RepositoryGenerator
+import fr.corpauration.utils.*
 import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
@@ -52,7 +51,7 @@ class HomeworkResource {
 
     @POST
     @AccountExist
-    @NeedToBeInGroups(HOMEWORK_RESP)
+    @NeedToBeProfessorOrInGroups(HOMEWORK_RESP)
     fun createHomework(json: JsonNode): Uni<Void> {
         if (!json.hasNonNull("title") || !json.get("title").isTextual || !json.hasNonNull(
                 "type"
@@ -81,7 +80,7 @@ class HomeworkResource {
     @PUT
     @Path("/{id}")
     @AccountExist
-    @NeedToBeInGroups(HOMEWORK_RESP)
+    @NeedToBeProfessorOrInGroups(HOMEWORK_RESP)
     fun update(@PathParam("id") id: UUID, json: JsonNode): Uni<Void> {
         return homeworkRepository.findById(id).flatMap {
             homework ->
@@ -105,7 +104,7 @@ class HomeworkResource {
     @DELETE
     @Path("/{id}")
     @AccountExist
-    @NeedToBeInGroups(HOMEWORK_RESP)
+    @NeedToBeProfessorOrInGroups(HOMEWORK_RESP)
     fun delete(@PathParam("id") id: UUID): Uni<Void> {
         return homeworkRepository.findById(id).flatMap {
                 homework ->
@@ -135,6 +134,7 @@ class HomeworksResource {
 
     @GET
     @AccountExist
+    @NeedToBeInGroups(ADMIN)
     @Produces(MediaType.APPLICATION_JSON)
     fun getAll(): Multi<HomeworkEntity> {
         return homeworkRepository.getAll()
@@ -143,16 +143,27 @@ class HomeworksResource {
     @POST
     @AccountExist
     @Produces(MediaType.APPLICATION_JSON)
-    fun getFromTo(json: JsonNode): Uni<List<HomeworkEntity>>? {
+    fun getFromTo(json: JsonNode): Uni<List<HomeworkEntity>> {
         if (!json.hasNonNull("group") || !json.get("group").isInt || !json.hasNonNull(
                 "start"
             ) || !json.get("start").isTextual || !json.hasNonNull("end") || !json.get("end").isTextual
         ) throw BadRequestException()
         val start = LocalDate.parse(json.get("start").asText())
         val end = LocalDate.parse(json.get("end").asText())
-        return homeworkRepository.findBy(json.get("group").asInt(), "group").collect().asList().onItem() // FIXME
-            .transform {
-                it.filter { it.date >= start && it.date <= end }
-            }
+        return wrapperRetrieveHomeworksForGroupBetweenDate(json.get("group").asInt(), start, end).collect().asList()
+    }
+
+    @CustomSql(
+        """
+        select id, title, content, date, "group", type from homeworks
+        where "group" = $1 and date >= $2 and date <= $3
+    """, entity = HomeworkEntity::class
+    )
+    fun wrapperRetrieveHomeworksForGroupBetweenDate(
+        group: Int,
+        start: LocalDate,
+        end: LocalDate
+    ): Multi<HomeworkEntity> {
+        return homeworkRepository.wrapperRetrieveHomeworksForGroupBetweenDate(group, start, end)
     }
 }

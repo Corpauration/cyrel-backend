@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import fr.corpauration.group.GroupRepository
 import fr.corpauration.homework.UnauthorizedGroupTarget
 import fr.corpauration.user.UserRepository
+import fr.corpauration.user.UserType
 import fr.corpauration.utils.AccountExist
 import fr.corpauration.utils.CustomSql
 import fr.corpauration.utils.RepositoryGenerator
@@ -56,7 +57,8 @@ class ScheduleResource {
         return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
             .transform { it[0] }
             .flatMap {
-                if (it.groups.map { it.id }.contains(json.get("group").asInt()))
+                if (it.groups.map { it.id }
+                        .contains(json.get("group").asInt()) || it.type == UserType.PROFESSOR.ordinal)
                     wrapperRetrieveScheduleForGroupBetweenDate(json.get("group").asInt(), start, end).collect().asList()
                 else throw UnauthorizedGroupTarget()
             }
