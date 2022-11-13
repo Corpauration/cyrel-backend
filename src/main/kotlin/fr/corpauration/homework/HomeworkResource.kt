@@ -6,6 +6,7 @@ import fr.corpauration.group.GroupEntity
 import fr.corpauration.group.GroupRepository
 import fr.corpauration.group.HOMEWORK_RESP
 import fr.corpauration.user.UserRepository
+import fr.corpauration.user.UserType
 import fr.corpauration.utils.*
 import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
@@ -63,14 +64,17 @@ class HomeworkResource {
         return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
             .transform { it[0] }
             .flatMap {
-                if (it.groups.map { it.id }.contains(json.get("group").asInt()))
+                if (it.groups.map { it.id }
+                        .contains(json.get("group").asInt()) || it.type == UserType.PROFESSOR.ordinal)
                     homeworkRepository.save(
                         HomeworkEntity(
                             title = json.get("title").asText(),
                             content = json.get("content").asText(),
                             type = json.get("type").asInt(),
                             date = LocalDate.parse(json.get("date").asText()),
-                            group = it.groups.filter { it.id == json.get("group").asInt() }[0]
+                            group = if (it.type != UserType.PROFESSOR.ordinal) it.groups.filter {
+                                it.id == json.get("group").asInt()
+                            }[0] else GroupEntity(id = json.get("group").asInt())
                         )
                     )
                 else throw UnauthorizedGroupTarget()
@@ -88,15 +92,24 @@ class HomeworkResource {
                 .transform { it[0] }
                 .flatMap {
                     user ->
-                    if (user.groups.map { it.id }.contains(homework.group.id) && (json.hasNonNull("group") && json.get("group").isInt && user.groups.map { it.id }.contains(json.get("group").asInt()) || !json.hasNonNull("group"))) {
-                        if (json.hasNonNull("title") && json.get("title").isTextual) homework.title = json.get("title").asText()
-                        if (json.hasNonNull("content") && json.get("content").isTextual) homework.content = json.get("content").asText()
+                    if ((user.groups.map { it.id }
+                            .contains(homework.group.id) || user.type == UserType.PROFESSOR.ordinal) && (json.hasNonNull(
+                            "group"
+                        ) && json.get("group").isInt && (user.groups.map { it.id }.contains(
+                            json.get("group").asInt()
+                        ) || user.type == UserType.PROFESSOR.ordinal) || !json.hasNonNull("group"))
+                    ) {
+                        if (json.hasNonNull("title") && json.get("title").isTextual) homework.title =
+                            json.get("title").asText()
+                        if (json.hasNonNull("content") && json.get("content").isTextual) homework.content =
+                            json.get("content").asText()
                         if (json.hasNonNull("type") && json.get("type").isInt) homework.type = json.get("type").asInt()
-                        if (json.hasNonNull("date") && json.get("date").isTextual) homework.date = LocalDate.parse(json.get("date").asText())
-                        if (json.hasNonNull("group") && json.get("group").isInt) homework.group = GroupEntity(id = json.get("group").asInt())
+                        if (json.hasNonNull("date") && json.get("date").isTextual) homework.date =
+                            LocalDate.parse(json.get("date").asText())
+                        if (json.hasNonNull("group") && json.get("group").isInt) homework.group =
+                            GroupEntity(id = json.get("group").asInt())
                         homeworkRepository.update(homework)
-                    }
-                    else throw UnauthorizedGroupTarget()
+                    } else throw UnauthorizedGroupTarget()
                 }
         }
     }
@@ -112,10 +125,10 @@ class HomeworkResource {
                 .transform { it[0] }
                 .flatMap {
                         user ->
-                    if (user.groups.map { it.id }.contains(homework.group.id)) {
+                    if (user.groups.map { it.id }
+                            .contains(homework.group.id) || user.type == UserType.PROFESSOR.ordinal) {
                         homeworkRepository.delete(homework)
-                    }
-                    else throw UnauthorizedGroupTarget()
+                    } else throw UnauthorizedGroupTarget()
                 }
         }
     }
