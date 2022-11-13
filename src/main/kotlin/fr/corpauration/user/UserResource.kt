@@ -81,6 +81,16 @@ class UserResource : BaseResource() {
     }
 
     @GET
+    @AccountExist
+    @Path("/me")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getMe(): Uni<UserEntity> {
+        return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem().transform {
+            it.first()
+        }
+    }
+
+    @GET
     @Path("/isRegistered")
     fun isRegistered(): Uni<Boolean> {
         return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem().transform {
@@ -91,8 +101,10 @@ class UserResource : BaseResource() {
     @POST
     suspend fun register(json: JsonNode) {
         if (!identity.principal.name.endsWith("@cy-tech.fr")) throw WrongEmailDomain()
-        if (!json.hasNonNull("person_type") || !json.get("person_type").isInt || json.get("person_type")
-                .asInt() != UserType.STUDENT.ordinal || !json.hasNonNull("student_id") || !json.get("student_id").isInt
+        if (!json.hasNonNull("person_type") || !json.get("person_type").isInt || (json.get("person_type")
+                .asInt() != UserType.STUDENT.ordinal && json.get("person_type")
+                .asInt() != UserType.PROFESSOR.ordinal) || (json.get("person_type")
+                .asInt() == UserType.STUDENT.ordinal && (!json.hasNonNull("student_id") || !json.get("student_id").isInt))
         ) throw BadRequestException("Malformed request")
         userRepository.findBy(identity.principal.name, "email").collect().asList().flatMap {
             if (it.size == 0) {

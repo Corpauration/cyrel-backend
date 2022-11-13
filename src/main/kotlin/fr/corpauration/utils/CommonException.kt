@@ -8,6 +8,8 @@ class UserNotRegistered : RuntimeException()
 
 class UserNotAllowed : RuntimeException()
 
+class ProfessorNotAuthorized : RuntimeException()
+
 class NotReactiveFriendly : RuntimeException()
 
 class CommonExceptionMapper {
@@ -19,6 +21,11 @@ class CommonExceptionMapper {
     @ServerExceptionMapper
     fun mapException(x: UserNotAllowed): RestResponse<String>? {
         return RestResponse.status(Response.Status.FORBIDDEN, "User is not allowed")
+    }
+
+    @ServerExceptionMapper
+    fun mapException(x: ProfessorNotAuthorized): RestResponse<String>? {
+        return RestResponse.status(Response.Status.FORBIDDEN, "Professor is not authorized")
     }
 
     @ServerExceptionMapper

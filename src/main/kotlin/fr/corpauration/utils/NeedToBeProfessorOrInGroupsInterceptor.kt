@@ -12,10 +12,11 @@ import javax.interceptor.AroundInvoke
 import javax.interceptor.Interceptor
 import javax.interceptor.InvocationContext
 
+
 @Interceptor
-@AccountExist
+@NeedToBeProfessorOrInGroups()
 @Priority(Interceptor.Priority.LIBRARY_BEFORE)
-class AccountExistInterceptor {
+class NeedToBeProfessorOrInGroupsInterceptor {
     @Inject
     lateinit var identity: SecurityIdentity
 
@@ -27,24 +28,27 @@ class AccountExistInterceptor {
 
     @AroundInvoke
     fun intercept(context: InvocationContext): Any {
-        val list = userRepository.findBy(identity.principal.name, "email").collect().asList()
+        val user = userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
+            .transform { if (it.size == 0) throw UserNotRegistered() else it[0] }
+
+        val groups = context.method.getAnnotation(NeedToBeProfessorOrInGroups::class.java).groups.asList()
 
         val proceeded = context.proceed()
 
+
         return when (proceeded::class.simpleName) {
-            "UniOnItemTransformToUni" -> list.flatMap {
-                if (it.size == 1 && it.first().type == UserType.PROFESSOR.ordinal) professorRepository.findById(it.first().id)
+            "UniOnItemTransformToUni" -> user.flatMap {
+                if (it.type == UserType.PROFESSOR.ordinal) professorRepository.findById(it.id)
                     .flatMap { if (it.authorized) (proceeded as UniOnItemTransformToUni<*, *>) else throw ProfessorNotAuthorized() }
-                else if (it.size == 1) (proceeded as UniOnItemTransformToUni<*, *>)
-                else throw UserNotRegistered()
+                else if (it.groups.map { it.id }.containsAll(groups)) (proceeded as UniOnItemTransformToUni<*, *>)
+                else throw UserNotAllowed()
             }
 
-            "UniOnItemTransformToMulti" -> list.toMulti().flatMap {
-                if (it.size == 1 && it.first().type == UserType.PROFESSOR.ordinal) professorRepository.findById(it.first().id)
-                    .toMulti()
+            "UniOnItemTransformToMulti" -> user.toMulti().flatMap {
+                if (it.type == UserType.PROFESSOR.ordinal) professorRepository.findById(it.id).toMulti()
                     .flatMap { if (it.authorized) (proceeded as UniOnItemTransformToMulti<*, *>) else throw ProfessorNotAuthorized() }
-                else if (it.size == 1) (proceeded as UniOnItemTransformToMulti<*, *>)
-                else throw UserNotRegistered()
+                if (it.groups.map { it.id }.containsAll(groups)) (proceeded as UniOnItemTransformToMulti<*, *>)
+                else throw UserNotAllowed()
             }
 
             else -> throw NotReactiveFriendly()
