@@ -76,7 +76,10 @@ class ScheduleResource {
 
         return wrapperRetrieveScheduleProfessors().collect().asList().flatMap {
             if (it.contains(json.get("professor").asText()))
-                wrapperRetrieveScheduleForProfessorBetweenDate(json.get("professor").asText(), start, end).collect().asList()
+                wrapperRetrieveScheduleForProfessorBetweenDate(json.get("professor").asText(), start, end).collect()
+                    .asList().onItem().transform {
+                    it.distinctBy { Pair(it.start, it.subject) }
+                }
             else throw Exception()
         }
     }
