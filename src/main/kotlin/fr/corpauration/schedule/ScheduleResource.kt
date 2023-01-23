@@ -98,7 +98,7 @@ class ScheduleResource {
 
     @CustomSql(
         """
-        select distinct regexp_split_to_table(teachers, ',') from courses where teachers <> '' ORDER BY regexp_split_to_table(teachers, ',') asc 
+        select distinct regexp_split_to_table(teachers, ',') from courses where teachers <> '' and teachers not ilike '%vac_tempo_%' ORDER BY regexp_split_to_table(teachers, ',') asc 
     """, entity = CourseEntity::class
     )
     fun wrapperRetrieveScheduleProfessors(): Multi<String> {
