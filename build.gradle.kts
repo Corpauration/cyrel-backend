@@ -22,8 +22,8 @@ dependencies {
     implementation("io.quarkus:quarkus-keycloak-authorization")
     implementation("io.quarkus:quarkus-oidc")
     implementation(kotlin("stdlib-jdk8"))
-    implementation("com.github.Corpauration:quarkus-annotations:ce03a5a6b2")
-    ksp("com.github.Corpauration:quarkus-annotations:ce03a5a6b2")
+    implementation("com.github.Corpauration:quarkus-annotations:9592dd6d98")
+    ksp("com.github.Corpauration:quarkus-annotations:9592dd6d98")
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
     implementation("io.quarkus:quarkus-kotlin")
@@ -49,7 +49,7 @@ buildscript {
 }
 
 group = "fr.corpauration"
-version = "3.1.0"
+version = "3.2.0"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_16
