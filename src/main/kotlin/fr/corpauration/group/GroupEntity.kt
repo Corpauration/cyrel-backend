@@ -6,7 +6,7 @@ import java.util.*
 
 @Entity
 class GroupEntity(
-    var id: Int = -1,
+    var id: Int = -100,
     var name: String = "",
     var referent: UUID? = null,
     @OneToOne(id = Int::class) var parent: GroupEntity? = null,
