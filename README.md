@@ -12,6 +12,10 @@ a module that get data from the university environment (Celcat) (not the admin A
 Other information are provided by users.
 
 &nbsp;
+
+Copyright Corpauration, distribution and commercial use of this software and relative assets is prohibited
+
+&nbsp;
 &nbsp;
 
 🧃
