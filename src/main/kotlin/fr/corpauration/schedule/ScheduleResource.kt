@@ -40,6 +40,12 @@ class ScheduleResource {
     @Inject
     lateinit var userRepository: UserRepository
 
+    @GET
+    @Path("/{id}")
+    @AccountExist
+    @Produces(MediaType.APPLICATION_JSON)
+    fun get(@PathParam("id") id: String): Uni<CourseEntity> = courseRepository.findById(id)
+
     @POST
     @AccountExist
     @Produces(MediaType.APPLICATION_JSON)
@@ -78,17 +84,17 @@ class ScheduleResource {
             if (it.contains(json.get("professor").asText()))
                 wrapperRetrieveScheduleForProfessorBetweenDate(json.get("professor").asText(), start, end).collect()
                     .asList().onItem().transform {
-                    it.distinctBy { Pair(it.start, it.subject) }
-                }
+                        it.distinctBy { Pair(it.start, it.subject) }
+                    }
             else throw Exception()
         }
     }
 
     @CustomSql(
         """
-        select c.* from courses as c
-        join courses_groups as gc on c.id = gc.id
-        where gc.ref = $1 and c.start >= $2 and c."end" <= $3
+            select c.* from courses as c
+            join courses_groups as gc on c.id = gc.id
+            where gc.ref = $1 and c.start >= $2 and c."end" <= $3
     """, entity = CourseEntity::class
     )
     fun wrapperRetrieveScheduleForGroupBetweenDate(
