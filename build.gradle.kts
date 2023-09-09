@@ -14,7 +14,7 @@ repositories {
 val quarkusPlatformGroupId: String by project
 val quarkusPlatformArtifactId: String by project
 val quarkusPlatformVersion: String by project
-val ktor_version: String by project
+val ktorVersion: String by project
 
 dependencies {
     implementation("io.quarkus:quarkus-jdbc-postgresql")
@@ -34,10 +34,10 @@ dependencies {
     implementation("io.quarkus:quarkus-micrometer-registry-prometheus")
     implementation("io.quarkus:quarkus-flyway")
     implementation("io.smallrye.reactive:mutiny-kotlin")
-    implementation("io.ktor:ktor-client-core:$ktor_version")
-    implementation("io.ktor:ktor-client-cio:$ktor_version")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
-    implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
 }
@@ -65,6 +65,17 @@ allOpen {
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions.jvmTarget = JavaVersion.VERSION_16.toString()
     kotlinOptions.javaParameters = true
+}
+
+project.afterEvaluate {
+    getTasksByName("quarkusGenerateCode", true).forEach { task ->
+        task.setDependsOn(
+            task.dependsOn.filterIsInstance<Provider<Task>>().filter { it.get().name != "processResources" })
+    }
+    getTasksByName("quarkusGenerateCodeDev", true).forEach { task ->
+        task.setDependsOn(
+            task.dependsOn.filterIsInstance<Provider<Task>>().filter { it.get().name != "processResources" })
+    }
 }
 
 kotlin {
