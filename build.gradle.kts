@@ -6,10 +6,10 @@ plugins {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     gradlePluginPortal()
     maven { url = uri("https://jitpack.io") }
-    mavenLocal()
 }
 
 val quarkusPlatformGroupId: String by project
@@ -23,8 +23,8 @@ dependencies {
     implementation("io.quarkus:quarkus-keycloak-authorization")
     implementation("io.quarkus:quarkus-oidc")
     implementation(kotlin("stdlib"))
-    implementation("com.github.Corpauration:quarkus-annotations:1.0.11")
-    ksp("com.github.Corpauration:quarkus-annotations:1.0.11")
+    implementation("com.github.Corpauration:quarkus-annotations:1.1.0")
+    ksp("com.github.Corpauration:quarkus-annotations:1.1.0")
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
     implementation("io.quarkus:quarkus-kotlin")
