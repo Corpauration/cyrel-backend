@@ -1,12 +1,13 @@
 plugins {
-    kotlin("jvm") version "1.6.21"
-    kotlin("plugin.allopen") version "1.6.21"
+    kotlin("jvm") version "1.9.0"
+    kotlin("plugin.allopen") version "1.9.0"
     id("io.quarkus")
-    id("com.google.devtools.ksp") version "1.6.21-1.0.6"
+    id("com.google.devtools.ksp") version "1.9.0-1.0.11"
 }
 
 repositories {
     mavenCentral()
+    gradlePluginPortal()
     maven { url = uri("https://jitpack.io") }
     mavenLocal()
 }
@@ -21,7 +22,7 @@ dependencies {
     implementation("io.quarkus:quarkus-container-image-docker")
     implementation("io.quarkus:quarkus-keycloak-authorization")
     implementation("io.quarkus:quarkus-oidc")
-    implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("stdlib"))
     implementation("com.github.Corpauration:quarkus-annotations:9592dd6d98")
     ksp("com.github.Corpauration:quarkus-annotations:9592dd6d98")
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
@@ -44,7 +45,7 @@ dependencies {
 
 buildscript {
     dependencies {
-        classpath(kotlin("gradle-plugin", version = "1.6.21"))
+        classpath(kotlin("gradle-plugin", version = "1.9.0"))
     }
 }
 
