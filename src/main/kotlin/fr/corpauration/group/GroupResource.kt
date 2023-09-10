@@ -62,11 +62,22 @@ class GroupResource : BaseResource() {
     fun join(@PathParam("id") id: Int): Uni<Boolean> {
         return groupRepository.findById(id).flatMap { group ->
             if (!group.private) userRepository.findBy(identity.principal.name, "email").collect().asList().flatMap {
-                if (it.size == 1) {
-                    if (it[0].groups.none { it.id == group.id }) {
-                        it[0].groups = it[0].groups.plus(group)
-                        userRepository.update(it[0]).flatMap { Uni.createFrom().item(true) }
-                    } else Uni.createFrom().item(false)
+                if (it.size == 1 && group.tags.contains("type")) {
+                    val join = { type: String, value: Int ->
+                        if (it[0].tags.contains(type))
+                            Uni.createFrom().item(false)
+                        else {
+                            it[0].tags += mapOf(type to value.toString())
+                            userRepository.update(it[0]).flatMap { Uni.createFrom().item(true) }
+                        }
+                    }
+
+                    when (val t = group.tags["type"]) {
+                        "promo" -> join(t, group.id)
+                        "group" -> join(t, group.id)
+                        "english" -> join(t, group.id)
+                        else -> Uni.createFrom().item(false)
+                    }
                 } else throw UserNotRegistered()
             } else Uni.createFrom().item(false)
         }
@@ -114,6 +125,22 @@ class GroupsResource : BaseResource() {
     @AccountExist
     @Produces(MediaType.APPLICATION_JSON)
     fun getMyGroups(): Uni<List<GroupEntity>> {
-        return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem().transform { it[0].groups }
+        return userRepository.findBy(identity.principal.name, "email").collect().asList().map {
+            val list = mutableListOf<Int>()
+            val g = { k: String -> if (it[0].tags.contains(k)) list.add(it[0].tags[k]!!.toInt()) }
+            val sg = { k: Int -> if (it[0].tags[k.toString()] == "true") list.add(k) }
+            g("promo")
+            g("group")
+            g("english")
+            sg(ADMIN)
+            sg(HOMEWORK_RESP)
+            sg(DELEGATE)
+
+            list
+        }.flatMap {
+            Mutiny.sequentialCreateUniFromItems(it) { id ->
+                groupRepository.findById(id)
+            }
+        }
     }
 }

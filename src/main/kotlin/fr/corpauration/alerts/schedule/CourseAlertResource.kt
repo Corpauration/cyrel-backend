@@ -48,7 +48,7 @@ class CourseAlertResource {
         ) else null
         return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem().transform { it[0] }
             .flatMap {
-                if (it.groups.map { it.id }.contains(json.get("group").asInt())) courseAlertRepository.findBy(
+                if (it.tags["group"].equals(json.get("group").asInt().toString())) courseAlertRepository.findBy(
                     json.get("group").asInt(),
                     "group"
                 ).collect().asList().onItem().transform {

@@ -64,17 +64,14 @@ class HomeworkResource {
         return userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
             .transform { it[0] }
             .flatMap {
-                if (it.groups.map { it.id }
-                        .contains(json.get("group").asInt()) || it.type == UserType.PROFESSOR.ordinal)
+                if (it.isInGroup(json.get("group").asInt()) || it.type == UserType.PROFESSOR.ordinal)
                     homeworkRepository.save(
                         HomeworkEntity(
                             title = json.get("title").asText(),
                             content = json.get("content").asText(),
                             type = json.get("type").asInt(),
                             date = LocalDate.parse(json.get("date").asText()),
-                            group = if (it.type != UserType.PROFESSOR.ordinal) it.groups.filter {
-                                it.id == json.get("group").asInt()
-                            }[0] else GroupEntity(id = json.get("group").asInt())
+                            group = GroupEntity(id = json.get("group").asInt())
                         )
                     )
                 else throw UnauthorizedGroupTarget()
@@ -86,16 +83,13 @@ class HomeworkResource {
     @AccountExist
     @NeedToBeProfessorOrInGroups(HOMEWORK_RESP)
     fun update(@PathParam("id") id: UUID, json: JsonNode): Uni<Void> {
-        return homeworkRepository.findById(id).flatMap {
-            homework ->
+        return homeworkRepository.findById(id).flatMap { homework ->
             userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
                 .transform { it[0] }
-                .flatMap {
-                    user ->
-                    if ((user.groups.map { it.id }
-                            .contains(homework.group.id) || user.type == UserType.PROFESSOR.ordinal) && (json.hasNonNull(
+                .flatMap { user ->
+                    if ((user.isInGroup(homework.group.id) || user.type == UserType.PROFESSOR.ordinal) && (json.hasNonNull(
                             "group"
-                        ) && json.get("group").isInt && (user.groups.map { it.id }.contains(
+                        ) && json.get("group").isInt && (user.isInGroup(
                             json.get("group").asInt()
                         ) || user.type == UserType.PROFESSOR.ordinal) || !json.hasNonNull("group"))
                     ) {
@@ -119,14 +113,11 @@ class HomeworkResource {
     @AccountExist
     @NeedToBeProfessorOrInGroups(HOMEWORK_RESP)
     fun delete(@PathParam("id") id: UUID): Uni<Void> {
-        return homeworkRepository.findById(id).flatMap {
-                homework ->
+        return homeworkRepository.findById(id).flatMap { homework ->
             userRepository.findBy(identity.principal.name, "email").collect().asList().onItem()
                 .transform { it[0] }
-                .flatMap {
-                        user ->
-                    if (user.groups.map { it.id }
-                            .contains(homework.group.id) || user.type == UserType.PROFESSOR.ordinal) {
+                .flatMap { user ->
+                    if (user.isInGroup(homework.group.id) || user.type == UserType.PROFESSOR.ordinal) {
                         homeworkRepository.delete(homework)
                     } else throw UnauthorizedGroupTarget()
                 }
