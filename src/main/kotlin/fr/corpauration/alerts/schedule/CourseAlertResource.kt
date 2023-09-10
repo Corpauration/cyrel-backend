@@ -12,7 +12,10 @@ import io.smallrye.mutiny.Uni
 import java.time.LocalDateTime
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
-import javax.ws.rs.*
+import javax.ws.rs.BadRequestException
+import javax.ws.rs.POST
+import javax.ws.rs.Path
+import javax.ws.rs.Produces
 import javax.ws.rs.core.MediaType
 
 @Path("/alert/schedule")

@@ -1,10 +1,7 @@
 package fr.corpauration.group
 
 import fr.corpauration.user.UserRepository
-import fr.corpauration.utils.AccountExist
-import fr.corpauration.utils.BaseResource
-import fr.corpauration.utils.RepositoryGenerator
-import fr.corpauration.utils.UserNotRegistered
+import fr.corpauration.utils.*
 import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
