@@ -3,9 +3,10 @@ package fr.corpauration.utils
 import fr.corpauration.user.ProfessorRepository
 import fr.corpauration.user.UserRepository
 import fr.corpauration.user.UserType
+import io.quarkus.logging.Log
 import io.quarkus.security.identity.SecurityIdentity
-import io.smallrye.mutiny.operators.uni.UniOnItemTransformToMulti
-import io.smallrye.mutiny.operators.uni.UniOnItemTransformToUni
+import io.smallrye.mutiny.Multi
+import io.smallrye.mutiny.Uni
 import javax.annotation.Priority
 import javax.inject.Inject
 import javax.interceptor.AroundInvoke
@@ -33,25 +34,25 @@ class NeedToBeProfessorOrInGroupsInterceptor {
 
         val groups = context.method.getAnnotation(NeedToBeProfessorOrInGroups::class.java).groups.asList()
 
-        val proceeded = context.proceed()
-
-
-        return when (proceeded::class.simpleName) {
-            "UniOnItemTransformToUni" -> user.flatMap {
+        return when (val proceeded = context.proceed()) {
+            is Uni<*> -> user.flatMap {
                 if (it.type == UserType.PROFESSOR.ordinal) professorRepository.findById(it.id)
-                    .flatMap { if (it.authorized) (proceeded as UniOnItemTransformToUni<*, *>) else throw ProfessorNotAuthorized() }
-                else if (it.groups.map { it.id }.containsAll(groups)) (proceeded as UniOnItemTransformToUni<*, *>)
+                    .flatMap { if (it.authorized) proceeded else throw ProfessorNotAuthorized() }
+                else if (it.isInGroups(*groups.toIntArray())) proceeded
                 else throw UserNotAllowed()
             }
 
-            "UniOnItemTransformToMulti" -> user.toMulti().flatMap {
+            is Multi<*> -> user.toMulti().flatMap {
                 if (it.type == UserType.PROFESSOR.ordinal) professorRepository.findById(it.id).toMulti()
-                    .flatMap { if (it.authorized) (proceeded as UniOnItemTransformToMulti<*, *>) else throw ProfessorNotAuthorized() }
-                if (it.groups.map { it.id }.containsAll(groups)) (proceeded as UniOnItemTransformToMulti<*, *>)
+                    .flatMap { if (it.authorized) proceeded else throw ProfessorNotAuthorized() }
+                if (it.isInGroups(*groups.toIntArray())) proceeded
                 else throw UserNotAllowed()
             }
 
-            else -> throw NotReactiveFriendly()
+            else -> {
+                Log.error("Not Reactive Friendly -> ${proceeded::class.simpleName} | ${context.method}")
+                throw NotReactiveFriendly()
+            }
         }
     }
 }
