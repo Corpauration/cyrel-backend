@@ -26,3 +26,9 @@ class GroupEntity(
 const val ADMIN = -1
 const val HOMEWORK_RESP = -2
 const val DELEGATE = -3
+
+enum class SpecialGroup(val id: Int) {
+    ADMIN(-1),
+    HOMEWORK_RESP(-2),
+    DELEGATE(-3)
+}

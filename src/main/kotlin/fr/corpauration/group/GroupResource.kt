@@ -128,13 +128,13 @@ class GroupsResource : BaseResource() {
         return userRepository.findBy(identity.principal.name, "email").collect().asList().map {
             val list = mutableListOf<Int>()
             val g = { k: String -> if (it[0].tags.contains(k)) list.add(it[0].tags[k]!!.toInt()) }
-            val sg = { k: Int -> if (it[0].tags[k.toString()] == "true") list.add(k) }
+            val sg = { k: SpecialGroup -> if (it[0].tags[k.name.lowercase()] == "true") list.add(k.id) }
             g("promo")
             g("group")
             g("english")
-            sg(ADMIN)
-            sg(HOMEWORK_RESP)
-            sg(DELEGATE)
+            sg(SpecialGroup.ADMIN)
+            sg(SpecialGroup.HOMEWORK_RESP)
+            sg(SpecialGroup.DELEGATE)
 
             list
         }.flatMap {

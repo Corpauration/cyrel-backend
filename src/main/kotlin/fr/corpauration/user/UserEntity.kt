@@ -1,8 +1,6 @@
 package fr.corpauration.user
 
-import fr.corpauration.group.ADMIN
-import fr.corpauration.group.DELEGATE
-import fr.corpauration.group.HOMEWORK_RESP
+import fr.corpauration.group.SpecialGroup.*
 import fr.corpauration.utils.ElementsCollection
 import fr.corpauration.utils.Entity
 import java.time.LocalDate
@@ -25,8 +23,10 @@ class UserEntity(
 
     fun isInGroup(group: Int): Boolean =
         when (group) {
-            ADMIN, HOMEWORK_RESP, DELEGATE -> tags[group.toString()] == "true"
-            else -> listOf("promo", "group", "english").any { tags[group.toString()] == group.toString() }
+            ADMIN.id -> tags[ADMIN.name.lowercase()] == "true"
+            HOMEWORK_RESP.id -> tags[HOMEWORK_RESP.name.lowercase()] == "true"
+            DELEGATE.id -> tags[DELEGATE.name.lowercase()] == "true"
+            else -> listOf("promo", "group", "english").any { tags[it] == group.toString() }
         }
 
     fun isInOneOfGroups(vararg groups: Int): Boolean = groups.any { isInGroup(it) }
