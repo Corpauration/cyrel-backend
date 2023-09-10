@@ -13,6 +13,7 @@ import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
@@ -71,7 +72,8 @@ class HomeworkResource {
                             content = json.get("content").asText(),
                             type = json.get("type").asInt(),
                             date = LocalDate.parse(json.get("date").asText()),
-                            group = GroupEntity(id = json.get("group").asInt())
+                            group = GroupEntity(id = json.get("group").asInt()),
+                            last_modified_by = it
                         )
                     )
                 else throw UnauthorizedGroupTarget()
@@ -102,6 +104,8 @@ class HomeworkResource {
                             LocalDate.parse(json.get("date").asText())
                         if (json.hasNonNull("group") && json.get("group").isInt) homework.group =
                             GroupEntity(id = json.get("group").asInt())
+                        homework.last_modified_at = LocalDateTime.now()
+                        homework.last_modified_by = user
                         homeworkRepository.update(homework)
                     } else throw UnauthorizedGroupTarget()
                 }
@@ -159,7 +163,7 @@ class HomeworksResource {
 
     @CustomSql(
         """
-        select id, title, content, date, "group", type from homeworks
+        select id, title, content, date, "group", type, last_modified_by, last_modified_at, created_at from homeworks
         where "group" = $1 and date >= $2 and date <= $3
     """, entity = HomeworkEntity::class
     )
