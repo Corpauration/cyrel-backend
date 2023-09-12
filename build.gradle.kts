@@ -1,29 +1,30 @@
 plugins {
-    kotlin("jvm") version "1.6.21"
-    kotlin("plugin.allopen") version "1.6.21"
+    kotlin("jvm") version "1.9.0"
+    kotlin("plugin.allopen") version "1.9.0"
     id("io.quarkus")
-    id("com.google.devtools.ksp") version "1.6.21-1.0.6"
+    id("com.google.devtools.ksp") version "1.9.0-1.0.11"
 }
 
 repositories {
-    mavenCentral()
-    maven { url = uri("https://jitpack.io") }
     mavenLocal()
+    mavenCentral()
+    gradlePluginPortal()
+    maven { url = uri("https://jitpack.io") }
 }
 
 val quarkusPlatformGroupId: String by project
 val quarkusPlatformArtifactId: String by project
 val quarkusPlatformVersion: String by project
-val ktor_version: String by project
+val ktorVersion: String by project
 
 dependencies {
     implementation("io.quarkus:quarkus-jdbc-postgresql")
     implementation("io.quarkus:quarkus-container-image-docker")
     implementation("io.quarkus:quarkus-keycloak-authorization")
     implementation("io.quarkus:quarkus-oidc")
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("com.github.Corpauration:quarkus-annotations:9592dd6d98")
-    ksp("com.github.Corpauration:quarkus-annotations:9592dd6d98")
+    implementation(kotlin("stdlib"))
+    implementation("com.github.Corpauration:quarkus-annotations:1.1.2")
+    ksp("com.github.Corpauration:quarkus-annotations:1.1.2")
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
     implementation("io.quarkus:quarkus-kotlin")
@@ -34,26 +35,28 @@ dependencies {
     implementation("io.quarkus:quarkus-micrometer-registry-prometheus")
     implementation("io.quarkus:quarkus-flyway")
     implementation("io.smallrye.reactive:mutiny-kotlin")
-    implementation("io.ktor:ktor-client-core:$ktor_version")
-    implementation("io.ktor:ktor-client-cio:$ktor_version")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
-    implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
+    implementation("org.mnode.ical4j:ical4j:4.0.0-beta9")
+    implementation("org.biscuitsec:biscuit:2.3.1")
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
 }
 
 buildscript {
     dependencies {
-        classpath(kotlin("gradle-plugin", version = "1.6.21"))
+        classpath(kotlin("gradle-plugin", version = "1.9.0"))
     }
 }
 
 group = "fr.corpauration"
-version = "3.3.0"
+version = "3.4.0"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = JavaVersion.VERSION_16
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 allOpen {
@@ -63,8 +66,19 @@ allOpen {
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions.jvmTarget = JavaVersion.VERSION_16.toString()
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_17.toString()
     kotlinOptions.javaParameters = true
+}
+
+project.afterEvaluate {
+    getTasksByName("quarkusGenerateCode", true).forEach { task ->
+        task.setDependsOn(
+            task.dependsOn.filterIsInstance<Provider<Task>>().filter { it.get().name != "processResources" })
+    }
+    getTasksByName("quarkusGenerateCodeDev", true).forEach { task ->
+        task.setDependsOn(
+            task.dependsOn.filterIsInstance<Provider<Task>>().filter { it.get().name != "processResources" })
+    }
 }
 
 kotlin {

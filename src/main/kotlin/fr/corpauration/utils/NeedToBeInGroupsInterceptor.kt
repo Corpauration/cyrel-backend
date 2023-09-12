@@ -1,9 +1,10 @@
 package fr.corpauration.utils
 
 import fr.corpauration.user.UserRepository
+import io.quarkus.logging.Log
 import io.quarkus.security.identity.SecurityIdentity
-import io.smallrye.mutiny.operators.uni.UniOnItemTransformToMulti
-import io.smallrye.mutiny.operators.uni.UniOnItemTransformToUni
+import io.smallrye.mutiny.Multi
+import io.smallrye.mutiny.Uni
 import javax.annotation.Priority
 import javax.inject.Inject
 import javax.interceptor.AroundInvoke
@@ -28,21 +29,21 @@ class NeedToBeInGroupsInterceptor {
 
         val groups = context.method.getAnnotation(NeedToBeInGroups::class.java).groups.asList()
 
-        val proceeded = context.proceed()
-
-
-        return when (proceeded::class.simpleName) {
-            "UniOnItemTransformToUni" -> user.flatMap {
-                if (it.groups.map { it.id }.containsAll(groups)) (proceeded as UniOnItemTransformToUni<*, *>)
+        return when (val proceeded = context.proceed()) {
+            is Uni<*> -> user.flatMap {
+                if (it.isInGroups(*groups.toIntArray())) proceeded
                 else throw UserNotAllowed()
             }
 
-            "UniOnItemTransformToMulti" -> user.toMulti().flatMap {
-                if (it.groups.map { it.id }.containsAll(groups)) (proceeded as UniOnItemTransformToMulti<*, *>)
+            is Multi<*> -> user.toMulti().flatMap {
+                if (it.isInGroups(*groups.toIntArray())) proceeded
                 else throw UserNotAllowed()
             }
 
-            else -> throw NotReactiveFriendly()
+            else -> {
+                Log.error("Not Reactive Friendly -> ${proceeded::class.simpleName} | ${context.method}")
+                throw NotReactiveFriendly()
+            }
         }
     }
 }

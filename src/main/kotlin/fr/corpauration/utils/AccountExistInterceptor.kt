@@ -3,9 +3,10 @@ package fr.corpauration.utils
 import fr.corpauration.user.ProfessorRepository
 import fr.corpauration.user.UserRepository
 import fr.corpauration.user.UserType
+import io.quarkus.logging.Log
 import io.quarkus.security.identity.SecurityIdentity
-import io.smallrye.mutiny.operators.uni.UniOnItemTransformToMulti
-import io.smallrye.mutiny.operators.uni.UniOnItemTransformToUni
+import io.smallrye.mutiny.Multi
+import io.smallrye.mutiny.Uni
 import javax.annotation.Priority
 import javax.inject.Inject
 import javax.interceptor.AroundInvoke
@@ -29,25 +30,26 @@ class AccountExistInterceptor {
     fun intercept(context: InvocationContext): Any {
         val list = userRepository.findBy(identity.principal.name, "email").collect().asList()
 
-        val proceeded = context.proceed()
-
-        return when (proceeded::class.simpleName) {
-            "UniOnItemTransformToUni" -> list.flatMap {
+        return when (val proceeded = context.proceed()) {
+            is Uni<*> -> list.flatMap {
                 if (it.size == 1 && it.first().type == UserType.PROFESSOR.ordinal) professorRepository.findById(it.first().id)
-                    .flatMap { if (it.authorized) (proceeded as UniOnItemTransformToUni<*, *>) else throw ProfessorNotAuthorized() }
-                else if (it.size == 1) (proceeded as UniOnItemTransformToUni<*, *>)
+                    .flatMap { if (it.authorized) proceeded else throw ProfessorNotAuthorized() }
+                else if (it.size == 1) proceeded
                 else throw UserNotRegistered()
             }
 
-            "UniOnItemTransformToMulti" -> list.toMulti().flatMap {
+            is Multi<*> -> list.toMulti().flatMap {
                 if (it.size == 1 && it.first().type == UserType.PROFESSOR.ordinal) professorRepository.findById(it.first().id)
                     .toMulti()
-                    .flatMap { if (it.authorized) (proceeded as UniOnItemTransformToMulti<*, *>) else throw ProfessorNotAuthorized() }
-                else if (it.size == 1) (proceeded as UniOnItemTransformToMulti<*, *>)
+                    .flatMap { if (it.authorized) proceeded else throw ProfessorNotAuthorized() }
+                else if (it.size == 1) proceeded
                 else throw UserNotRegistered()
             }
 
-            else -> throw NotReactiveFriendly()
+            else -> {
+                Log.error("Not Reactive Friendly -> ${proceeded::class.simpleName} | ${context.method}")
+                throw NotReactiveFriendly()
+            }
         }
     }
 }
