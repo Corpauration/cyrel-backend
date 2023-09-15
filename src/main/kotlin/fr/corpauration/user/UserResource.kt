@@ -1,6 +1,8 @@
 package fr.corpauration.user
 
 import com.fasterxml.jackson.databind.JsonNode
+import fr.corpauration.conf.ConfResource
+import fr.corpauration.conf.RegisterWebhookConf
 import fr.corpauration.group.ADMIN
 import fr.corpauration.group.GroupRepository
 import fr.corpauration.security.WrongEmailDomain
@@ -8,17 +10,23 @@ import fr.corpauration.utils.AccountExist
 import fr.corpauration.utils.BaseResource
 import fr.corpauration.utils.NeedToBeInGroups
 import fr.corpauration.utils.RepositoryGenerator
+import fr.corpauration.utils.webhook.Webhook
+import fr.corpauration.utils.webhook.discord.DiscordWebhook
+import fr.corpauration.utils.webhook.discord.DiscordWebhookData
 import io.micrometer.core.instrument.MeterRegistry
 import io.quarkus.oidc.UserInfo
 import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
-import io.smallrye.mutiny.coroutines.awaitSuspending
 import io.vertx.mutiny.pgclient.PgPool
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDate
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
+import javax.enterprise.context.control.ActivateRequestContext
 import javax.inject.Inject
 import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
@@ -63,6 +71,14 @@ class UserResource : BaseResource() {
     @Inject
     lateinit var registry: MeterRegistry
 
+    @Inject
+    lateinit var confResource: ConfResource
+
+    @Inject
+    lateinit var webhookConf: RegisterWebhookConf
+
+    val webhook: Webhook = DiscordWebhook()
+
     @GET
     @AccountExist
     @NeedToBeInGroups(ADMIN)
@@ -98,15 +114,16 @@ class UserResource : BaseResource() {
         }
     }
 
+    @ActivateRequestContext
     @POST
-    suspend fun register(json: JsonNode) {
+    fun register(json: JsonNode): Uni<Unit> {
         if (!identity.principal.name.endsWith("@cy-tech.fr")) throw WrongEmailDomain()
         if (!json.hasNonNull("person_type") || !json.get("person_type").isInt || (json.get("person_type")
                 .asInt() != UserType.STUDENT.ordinal && json.get("person_type")
                 .asInt() != UserType.PROFESSOR.ordinal) || (json.get("person_type")
                 .asInt() == UserType.STUDENT.ordinal && (!json.hasNonNull("student_id") || !json.get("student_id").isInt))
         ) throw BadRequestException("Malformed request")
-        userRepository.findBy(identity.principal.name, "email").collect().asList().flatMap {
+        return userRepository.findBy(identity.principal.name, "email").collect().asList().flatMap {
             if (it.size == 0) {
                 val userInfo = (identity.attributes["userinfo"]!! as UserInfo)
                 val user = UserEntity(
@@ -125,22 +142,33 @@ class UserResource : BaseResource() {
                     UserType.PROFESSOR.ordinal -> Uni.createFrom().voidItem()
                     else -> Uni.createFrom().failure<Void?>(UnknownPersonType()).replaceWithVoid()
                 }.flatMap {
-                    userRepository.save(user).flatMap {
-                        when (json.get("person_type").asInt()) {
-                            UserType.STUDENT.ordinal -> studentRepository.save(
-                                StudentEntity(
-                                    id = user.id, student_id = json.get("student_id").asInt()
-                                )
-                            ).onItem().transform { registry.counter("cyrel_backend_registered_users").increment() }
+                    userRepository.save(user)
+                }.flatMap {
+                    when (json.get("person_type").asInt()) {
+                        UserType.STUDENT.ordinal -> studentRepository.save(
+                            StudentEntity(
+                                id = user.id, student_id = json.get("student_id").asInt()
+                            )
+                        ).onItem().transform { registry.counter("cyrel_backend_registered_users").increment() }
 
-                            UserType.PROFESSOR.ordinal -> professorRepository.save(ProfessorEntity(id = user.id))
-                                .onItem().transform { registry.counter("cyrel_backend_registered_users").increment() }
+                        UserType.PROFESSOR.ordinal -> professorRepository.save(ProfessorEntity(id = user.id))
+                            .onItem().transform { registry.counter("cyrel_backend_registered_users").increment() }
 
-                            else -> throw UnknownPersonType()
-                        }
+                        else -> throw UnknownPersonType()
+                    }
+                }.flatMap { confResource.webhookUrl }.map { url ->
+                    runBlocking {
+                        webhook.send(
+                            DiscordWebhookData(
+                                url,
+                                """### ${if (user.type == UserType.STUDENT.ordinal) "Student" else "Professor"} `${user.id}` registered
+                                            |${if (user.type == UserType.STUDENT.ordinal) webhookConf.student() else webhookConf.professor()}
+                                        """.trimMargin()
+                            )
+                        )
                     }
                 }
             } else throw AlreadyRegistered()
-        }.onItem().transform { "not null" }.awaitSuspending()
+        }
     }
 }
