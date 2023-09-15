@@ -1,5 +1,6 @@
 package fr.corpauration.user
 
+import com.clevercloud.biscuit.token.Biscuit
 import com.fasterxml.jackson.databind.JsonNode
 import fr.corpauration.conf.ConfResource
 import fr.corpauration.conf.RegisterWebhookConf
@@ -20,8 +21,6 @@ import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.Uni
 import io.vertx.mutiny.pgclient.PgPool
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import java.time.LocalDate
 import java.util.*
@@ -169,6 +168,80 @@ class UserResource : BaseResource() {
                     }
                 }
             } else throw AlreadyRegistered()
+        }
+    }
+
+    private fun getPreregistrationBiscuit(b64: String): Uni<PreregistrationBiscuit> {
+        return confResource.referentRegisteringPublicKey.flatMap {
+            val biscuit = try {
+                Biscuit.from_b64url(b64).verify(it)
+            } catch (e: Exception) {
+                throw PreregistrationCorruptBiscuit()
+            }
+            val facts = biscuit.authorizer().query("data(\$promo, \$group) <- promo(\$promo), group(\$group)")
+            val terms = facts.first().terms()
+            val preregistrationBiscuit =
+                PreregistrationBiscuit(promo = terms[0].toString().toInt(), group = terms[1].toString().toInt())
+
+            groupRepository.findById(preregistrationBiscuit.group).map {
+                if (it.referent == null) preregistrationBiscuit
+                else throw PreregistrationBiscuitExpired()
+            }
+        }
+    }
+
+    @GET
+    @Path("/preregistration/{biscuit}")
+    fun getPreregistrationInfo(@PathParam("biscuit") b64: String): Uni<PreregistrationBiscuit> {
+        if (!identity.principal.name.endsWith("@cy-tech.fr")) throw WrongEmailDomain()
+        return getPreregistrationBiscuit(b64)
+    }
+
+    @POST
+    @Path("/preregistration/{biscuit}")
+    fun register(@PathParam("biscuit") b64: String, json: JsonNode): Uni<Unit> {
+        if (!identity.principal.name.endsWith("@cy-tech.fr")) throw WrongEmailDomain()
+        if (!json.hasNonNull("student_id") || !json.get("student_id").isInt) throw BadRequestException("Malformed request")
+
+        return getPreregistrationBiscuit(b64).flatMap { biscuit ->
+            userRepository.findBy(identity.principal.name, "email").collect().asList().flatMap {
+                if (it.size == 0) {
+                    val userInfo = (identity.attributes["userinfo"]!! as UserInfo)
+                    val user = UserEntity(
+                        email = identity.principal.name,
+                        firstname = userInfo.getString("given_name"),
+                        lastname = userInfo.getString("family_name"),
+                        birthday = if (json.get("birthday") != null && !json.get("birthday").isNull) LocalDate.parse(
+                            json.get("birthday").asText()
+                        ) else null,
+                        type = UserType.STUDENT.ordinal,
+                        tags = mapOf("promo" to biscuit.promo.toString(), "group" to biscuit.group.toString())
+                    )
+                    cytechStudentRepository.findById(json.get("student_id").asInt()).onFailure()
+                        .transform { UnknownStudentId() }.flatMap {
+                            userRepository.save(user)
+                        }.flatMap {
+                            studentRepository.save(
+                                StudentEntity(
+                                    id = user.id, student_id = json.get("student_id").asInt()
+                                )
+                            ).onItem().transform { registry.counter("cyrel_backend_registered_users").increment() }
+                        }.flatMap { groupRepository.findById(biscuit.group) }.flatMap { group ->
+                            group.referent = user.id
+                            groupRepository.update(group)
+                        }.flatMap { confResource.webhookUrl }.map { url ->
+                            runBlocking {
+                                webhook.send(
+                                    DiscordWebhookData(
+                                        url, """### Student `${user.id}` registered with preregistration biscuit
+                                            |${webhookConf.student()}
+                                        """.trimMargin()
+                                    )
+                                )
+                            }
+                        }
+                } else throw AlreadyRegistered()
+            }
         }
     }
 }
