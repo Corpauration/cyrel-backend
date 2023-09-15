@@ -117,7 +117,14 @@ class GroupsResource : BaseResource() {
     @Path("/parents")
     @Produces(MediaType.APPLICATION_JSON)
     fun getParents(): Multi<GroupEntity> {
-        return groupRepository.findBy(null, "parent").skip().where { it.private }
+        return groupRepository.findBy(null, "parent").skip().where { it.private }.flatMap { group ->
+            groupRepository.findBy(group.id, "parent").skip()
+                .where { it.referent != null || it.tags["type"] == "english" }.collect().asList().map {
+                    Pair(
+                        group, it.isNotEmpty()
+                    )
+                }.toMulti()
+        }.skip().where { it.second }.map { it.first }
     }
 
     @GET
