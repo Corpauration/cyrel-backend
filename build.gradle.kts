@@ -52,7 +52,7 @@ buildscript {
 }
 
 group = "fr.corpauration"
-version = "3.5.0"
+version = "3.5.1"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
