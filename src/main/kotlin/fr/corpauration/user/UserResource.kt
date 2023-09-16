@@ -160,7 +160,7 @@ class UserResource : BaseResource() {
                         webhook.send(
                             DiscordWebhookData(
                                 url,
-                                """### ${if (user.type == UserType.STUDENT.ordinal) "Student" else "Professor"} `${user.id}` registered
+                                """**${if (user.type == UserType.STUDENT.ordinal) "Student" else "Professor"} `${user.id}` registered**
                                             |${if (user.type == UserType.STUDENT.ordinal) webhookConf.student() else webhookConf.professor()}
                                         """.trimMargin()
                             )
@@ -233,7 +233,7 @@ class UserResource : BaseResource() {
                             runBlocking {
                                 webhook.send(
                                     DiscordWebhookData(
-                                        url, """### Student `${user.id}` registered with preregistration biscuit
+                                        url, """**Student `${user.id}` registered with preregistration biscuit**
                                             |${webhookConf.student()}
                                         """.trimMargin()
                                     )
