@@ -9,7 +9,7 @@ fun CourseCategory.toColor(): String = when (this) {
     CourseCategory.CM -> "#c42626"
     CourseCategory.TD -> "#2626c4"
     CourseCategory.ACCUEIL -> "#26c426"
-    CourseCategory.EXAMENS -> "26c4c4"
+    CourseCategory.EXAMENS -> "#26c4c4"
     CourseCategory.INDISPONIBILITE -> "#383838"
     CourseCategory.REUNIONS -> "#6438c4"
     CourseCategory.MANIFESTATION -> "#c46438"
