@@ -17,9 +17,11 @@ import fr.corpauration.utils.UserNotRegistered
 import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Uni
+import net.fortuna.ical4j.data.CalendarBuilder
 import net.fortuna.ical4j.model.Calendar
 import net.fortuna.ical4j.model.LocationType
 import net.fortuna.ical4j.model.Property
+import net.fortuna.ical4j.model.TimeZoneRegistry
 import net.fortuna.ical4j.model.component.VEvent
 import net.fortuna.ical4j.model.component.VLocation
 import net.fortuna.ical4j.model.parameter.Cn
@@ -30,6 +32,7 @@ import net.fortuna.ical4j.model.property.immutable.ImmutableCalScale
 import net.fortuna.ical4j.model.property.immutable.ImmutableVersion
 import java.net.URI
 import java.time.LocalDateTime
+import java.time.ZonedDateTime
 import java.util.*
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
@@ -131,7 +134,7 @@ class ScheduleICalResource {
             var monday = LocalDateTime.now().withHour(1).withMinute(0).withSecond(0)
             monday = monday.minusDays(monday.dayOfWeek.ordinal.toLong())
             val start = monday.minusWeeks(1)
-            val end = monday.plusWeeks(2)
+            val end = monday.plusWeeks(3)
 
             if (p.professor) {
                 userRepository.findById(p.id).flatMap {
@@ -149,8 +152,12 @@ class ScheduleICalResource {
             calendar.add(ProdId("-//Corpauration//Cyrel//FR"))
             calendar.add(ImmutableVersion.VERSION_2_0)
             calendar.add(ImmutableCalScale.GREGORIAN)
+            val registry: TimeZoneRegistry = CalendarBuilder().registry
+            val timezone: TimeZone = registry.getTimeZone("Europe/Paris")
             for (course in it) {
-                val event = VEvent(course.start, course.end, course.subject)
+                val start = ZonedDateTime.of(course.start, timezone.toZoneId())
+                val end = ZonedDateTime.of(course.end, timezone.toZoneId())
+                val event = VEvent(start, end, course.subject)
                 event.add(Uid(course.id))
                 for (t in course.teachers.split(",")) {
                     val organizer = Organizer()
