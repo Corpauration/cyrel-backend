@@ -7,10 +7,8 @@ import java.util.*
 
 @Entity
 class ICalTokenEntity(
-    var id: String = "",
-    @OneToOne(id = UUID::class) var user: UserEntity? = UserEntity(),
-    var private: String = "",
-    var public: String = ""
+    var id: UUID = UUID.randomUUID(),
+    var email: String = ""
 ) {
     companion object
 }

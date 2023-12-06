@@ -1,6 +1,7 @@
 package fr.corpauration.conf
 
 import biscuit.format.schema.Schema
+import com.clevercloud.biscuit.crypto.KeyPair
 import com.clevercloud.biscuit.crypto.PublicKey
 import fr.corpauration.utils.RepositoryGenerator
 import io.smallrye.mutiny.Uni
@@ -30,6 +31,14 @@ class ConfResource {
         confRepository.findById("referent_registering_public").map {
             PublicKey(
                 Schema.PublicKey.Algorithm.Ed25519,
+                it.value
+            )
+        }
+    }
+
+    val iCalPrivateKey: Uni<KeyPair> by lazy {
+        confRepository.findById("ical_private_key").map {
+            KeyPair(
                 it.value
             )
         }

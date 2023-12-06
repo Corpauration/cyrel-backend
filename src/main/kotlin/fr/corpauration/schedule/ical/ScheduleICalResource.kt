@@ -4,6 +4,7 @@ import biscuit.format.schema.Schema
 import com.clevercloud.biscuit.crypto.KeyPair
 import com.clevercloud.biscuit.crypto.PublicKey
 import com.clevercloud.biscuit.token.Biscuit
+import fr.corpauration.conf.ConfResource
 import fr.corpauration.group.GroupRepository
 import fr.corpauration.schedule.CourseCategory
 import fr.corpauration.schedule.CourseRepository
@@ -13,7 +14,6 @@ import fr.corpauration.user.UserRepository
 import fr.corpauration.user.UserType
 import fr.corpauration.utils.AccountExist
 import fr.corpauration.utils.RepositoryGenerator
-import fr.corpauration.utils.UserNotRegistered
 import io.quarkus.security.Authenticated
 import io.quarkus.security.identity.SecurityIdentity
 import io.smallrye.mutiny.Uni
@@ -45,7 +45,7 @@ class ScheduleICalResource {
 
     @Inject
     @RepositoryGenerator(
-        table = "icaltokens", id = String::class, entity = ICalTokenEntity::class
+        table = "icaltokens", id = UUID::class, entity = ICalTokenEntity::class
     )
     lateinit var iCalTokenRepository: ICalTokenRepository
 
@@ -61,6 +61,9 @@ class ScheduleICalResource {
     @Inject
     lateinit var identity: SecurityIdentity
 
+    @Inject
+    lateinit var confResource: ConfResource
+
     @POST
     @Authenticated
     @AccountExist
@@ -68,45 +71,35 @@ class ScheduleICalResource {
     fun createToken(): Uni<String> {
         return userRepository.findBy(identity.principal.name, "email").collect().asList().map { it[0] }
             .flatMap { user ->
-                iCalTokenRepository.findBy(user.id, "user").collect().asList().map {
+                iCalTokenRepository.findBy(user.email, "email").collect().asList().map {
                     if (it.isEmpty()) user
                     else throw ScheduleICalNeedRecoverException(user, it.first())
                 }
-            }.flatMap {
-                val keypair = KeyPair()
-                buildSaveBiscuit(it, keypair)
+            }.flatMap { user ->
+                confResource.iCalPrivateKey.flatMap {
+                    val biscuit = buildBiscuit(user, it)
+                    iCalTokenRepository.save(biscuit.second).map { biscuit.first }
+                }
             }.onFailure(ScheduleICalNeedRecoverException::class.java)
             .recoverWithUni { it -> refreshToken((it as ScheduleICalNeedRecoverException).user, it.token) }
     }
 
-    private fun buildSaveBiscuit(it: UserEntity, keypair: KeyPair): Uni<String> {
-        val biscuitBuilder = Biscuit.builder(keypair).add_authority_fact("user(\"${it.id}\")")
-        val biscuit = when (it.type) {
-            UserType.STUDENT.ordinal -> {
-                biscuitBuilder.add_authority_fact("professor(\"false\")")
-                    .add_authority_fact("group(\"${it.tags["group"]}\")")
-            }
-
-            UserType.PROFESSOR.ordinal -> {
-                biscuitBuilder.add_authority_fact("professor(\"true\")").add_authority_fact("group(\"-100\")")
-            }
-
-            else -> throw UserNotRegistered()
-        }.build()
-        return iCalTokenRepository.save(
+    private fun buildBiscuit(it: UserEntity, keypair: KeyPair, bid: UUID = UUID.randomUUID()): Pair<String, ICalTokenEntity> {
+        val biscuitBuilder =
+            Biscuit.builder(keypair).add_authority_fact("id(\"$bid\")").add_authority_fact("version(1)")
+        val biscuit = biscuitBuilder.build()
+        return Pair(
+            biscuit.serialize_b64url(),
             ICalTokenEntity(
-                id = biscuit.revocation_identifiers().first().serialize_b64url(),
-                user = it,
-                private = keypair.toHex(),
-                public = keypair.public_key().toHex()
+                id = bid,
+                email = it.email
             )
-        ).map { biscuit.serialize_b64url() }
+        )
     }
 
     private fun refreshToken(user: UserEntity, token: ICalTokenEntity): Uni<String> {
-        return iCalTokenRepository.delete(token).flatMap {
-            val keypair = KeyPair(token.private)
-            buildSaveBiscuit(user, keypair)
+        return confResource.iCalPrivateKey.map {
+            buildBiscuit(user, it, bid = token.id).first
         }
     }
 
@@ -115,37 +108,40 @@ class ScheduleICalResource {
     @Produces("text/calendar")
     fun getICal(@PathParam("biscuit") b64: String): Uni<String> {
         val biscuit = Biscuit.from_b64url(b64)
-        val bid = biscuit.revocation_identifiers().first().serialize_b64url()
-        return iCalTokenRepository.findById(bid).flatMap {
+        return confResource.iCalPrivateKey.flatMap {
             val b = try {
-                biscuit.verify(PublicKey(Schema.PublicKey.Algorithm.Ed25519, it.public))
+                biscuit.verify(PublicKey(Schema.PublicKey.Algorithm.Ed25519, it.public_key))
             } catch (e: Exception) {
                 throw ScheduleICalCorruptedTokenException()
             }
             val facts = b.authorizer()
-                .query("data(\$id, \$professor, \$group) <- user(\$id), professor(\$professor), group(\$group)")
+                .query("data(\$id, \$version) <- id(\$id), version(\$version)")
             val terms = facts.first().terms()
             val p = object {
                 val id = UUID.fromString(terms[0].toString().replace("\"", ""))
-                val professor = terms[1].toString().replace("\"", "") == "true"
-                val group = terms[2].toString().replace("\"", "").toInt()
+                val version = terms[1].toString().toInt()
             }
 
-            var monday = LocalDateTime.now().withHour(1).withMinute(0).withSecond(0)
-            monday = monday.minusDays(monday.dayOfWeek.ordinal.toLong())
-            val start = monday.minusWeeks(1)
-            val end = monday.plusWeeks(3)
+            iCalTokenRepository.findById(p.id).flatMap { iCalToken ->
+                userRepository.findBy(iCalToken.email, "email").collect().asList().map {
+                    if (it.isEmpty()) throw ScheduleICalCorruptedTokenException()
+                    else it.first()
+                }.flatMap { user ->
+                    var monday = LocalDateTime.now().withHour(1).withMinute(0).withSecond(0)
+                    monday = monday.minusDays(monday.dayOfWeek.ordinal.toLong())
+                    val start = monday.minusWeeks(1)
+                    val end = monday.plusWeeks(5)
 
-            if (p.professor) {
-                userRepository.findById(p.id).flatMap {
-                    courseRepository.wrapperRetrieveScheduleForProfessorBetweenDate(
-                        "${it.firstname} ${it.lastname}", start, end
-                    ).collect().asList()
-                }.map {
-                    it.distinctBy { Pair(it.start, it.subject) }
+                    if (user.type == UserType.PROFESSOR.ordinal) {
+                        courseRepository.wrapperRetrieveScheduleForProfessorBetweenDate(
+                            "${user.firstname} ${user.lastname}", start, end
+                        ).collect().asList().map {
+                            it.distinctBy { Pair(it.start, it.subject) }
+                        }
+                    } else {
+                        courseRepository.wrapperRetrieveScheduleForGroupBetweenDate(user.tags["group"]!!.toInt(), start, end).collect().asList()
+                    }
                 }
-            } else {
-                courseRepository.wrapperRetrieveScheduleForGroupBetweenDate(p.group, start, end).collect().asList()
             }
         }.map {
             val calendar = Calendar()
